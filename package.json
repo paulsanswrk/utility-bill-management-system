@@ -8,6 +8,7 @@
     "devDependencies": {
         "@inertiajs/vue3": "^1.0.0",
         "@tailwindcss/forms": "^0.5.3",
+        "@tato30/vue-pdf": "^1.10.0",
         "@vitejs/plugin-vue": "^5.0.0",
         "autoprefixer": "^10.4.12",
         "axios": "^1.6.4",
@@ -26,6 +27,8 @@
     },
     "dependencies": {
         "dayjs": "^1.11.12",
-        "primeflex": "^3.3.1"
+        "primeflex": "^3.3.1",
+        "typescript-cookie": "^1.0.6",
+        "vue-i18n": "^9.13.1"
     }
 }

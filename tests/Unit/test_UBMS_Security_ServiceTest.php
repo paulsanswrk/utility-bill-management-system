@@ -20,10 +20,20 @@ test('test UBMS_Security_Service', function () {
     expect(strlen($key))->toBe(32);
 
     $iv = $service->generate_iv();
+    expect(strlen($iv))->toBe(16);
+
     $cipher_text = $service->encrypt('plaintext', $key, $iv);
     expect($service->decrypt($cipher_text, $key))->toBe('plaintext');
 
     $encrypted_key = $service->encrypt($key, $key, $iv);
     expect(strlen($encrypted_key))->toBe(16 + 32);
+
+    echo "iv: " . bin2hex($iv) . "\n";
+
+    $key = $service->gen_key_bytes($service->key_bit_len / 8);
+
+    echo "key: " . bin2hex($key) . "\n";
+
+    ob_flush();
 
 });

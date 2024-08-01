@@ -15,10 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('data', 1000)->nullable();
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('household_id');
             $table->string('bill_pdf_path')->nullable();
             $table->string('payment_confirmation_pdf_path')->nullable();
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('household_id')->references('id')->on('households');
         });
     }
 

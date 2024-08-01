@@ -43,28 +43,19 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'security_question' => ['required', 'string', 'max:255'],
-            'security_answer' => ['required', 'string', 'max:255'],
         ]);
 
-        $keys = $this->ubms_security_service->gen_keys_4_new_user($request->password, $request->security_question, $request->security_answer);
+        $keys = $this->ubms_security_service->gen_keys_4_new_user($request->password);
 
         session([
-            'session_key' => bin2hex($keys['session_key']),
-            'pwd_ciphered' => bin2hex($keys['pwd_ciphered']),
-            'work_key_ciphered' => bin2hex($keys['session_work_key_ciphered']),
+            'work_key_encrypted' => bin2hex($keys['work_key_encrypted']), //is it needed?
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            //added
-            'security_question' => $request->security_question,
-            'security_answer_hash' => bin2hex($keys['security_answer_hash']),
-            'key_salt' => bin2hex($keys['key_salt']),
-            'work_key_encrypted' => bin2hex($keys['work_key_ciphered']),
-            'pwd_key_encrypted' => bin2hex($keys['pwd_key_ciphered']),
+            'work_key_encrypted' => bin2hex($keys['work_key_encrypted']),
         ]);
 
         event(new Registered($user));

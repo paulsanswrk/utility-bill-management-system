@@ -1,0 +1,91 @@
+{
+    "app_title": "Sustav za Upravljanje Komunalnim Računima",
+
+    "user_name": "Ime",
+    "user_email": "Email",
+    "user_password": "Lozinka",
+    "user_password_confirm": "Potvrdi Lozinku",
+    "remember_me": "Zapamti me",
+    "forgot_password": "Zaboravljena Lozinka",
+    "forgot_your_password": "Zaboravili ste lozinku",
+
+    "register": "Registriraj se",
+    "register_hasAccount": "Već ste registrirani",
+    "reset_password": "Resetiraj Lozinku",
+
+    "thanks_for_signing_up": "Hvala što ste se prijavili! Prije nego što započnete, možete li potvrditi svoju email adresu klikom na poveznicu koju smo vam upravo poslali? Ako niste primili email, rado ćemo vam poslati drugi",
+    "a_new_verification_link_has_been_sent": "Nova poveznica za verifikaciju je poslana na email adresu koju ste unijeli tijekom registracije",
+    "resend_verification_email": "Ponovno pošalji email za verifikaciju",
+    "this_is_a_secure_area_of_the_application": "Ovo je sigurno područje aplikacije. Molimo potvrdite svoju lozinku prije nastavka",
+    "confirm": "Potvrdi",
+
+    "forgot_your_password_no_problem": "Zaboravili ste lozinku? Nema problema. Samo nam javite svoju email adresu i poslat ćemo vam poveznicu za resetiranje lozinke koja će vam omogućiti da odaberete novu",
+    "email_password_reset_link": "Pošalji poveznicu za resetiranje lozinke",
+
+    "email_verification": "Verifikacija Emaila",
+
+    "bill_date": "Datum Računa",
+    "date_from": "Od",
+    "date_to": "Do",
+    "utility_company": "Komunalno Poduzeće",
+
+    "any": "Bilo koje",
+
+    "payment_date": "Datum Plaćanja",
+    "paid": "Plaćeno",
+    "unpaid": "Neplaćeno",
+
+    "amount": "Iznos",
+
+    "bill": "Račun",
+    "payment_confirmation": "Potvrda Plaćanja",
+
+    "download": "Preuzmi",
+
+    "actions": "Akcije",
+    "add_bill": "Dodaj Račun",
+    "get_zip": "Preuzmite arhivu",
+    "edit": "Uredi",
+    "edit_bill": "Uredi Račun",
+    "delete": "Izbriši",
+    "no_bills_found": "Nisu pronađeni računi.",
+    "loading_data": "Učitavanje podataka. Molimo pričekajte",
+    "total_records": "Ukupan broj zapisa",
+
+    "name": "Ime",
+    "utility_company": "Komunalno Poduzeće",
+    "add_company": "Dodaj Poduzeće",
+    "select_a_company_or_add_a_new_company": "Odaberite poduzeće ili dodajte novo poduzeće",
+    "the_company_isnt_saved": "Poduzeće nije pohranjeno",
+    "this_field_is_required": "Ovo polje je obavezno",
+    "drag_and_drop_file_to_here_to_upload": "Povucite i ispustite datoteku ovdje za prijenos",
+    "upload_bill": "Prenesi Račun",
+    "upload_payment_confirmation": "Prenesi Potvrdu Plaćanja",
+    "save": "Spremi",
+    "saved": "Spremljeno",
+    "cancel": "Otkaži",
+
+    "profile": "Profil",
+    "profile_information": "Informacije o Profilu",
+    "update_your_accounts_profile_information_and_email_address": "Ažurirajte informacije o profilu i email adresi vašeg računa.",
+    "your_email_address_is_unverified": "Vaša email adresa nije verificirana",
+    "click_here_to_re_send_the_verification_email": "Kliknite ovdje za ponovno slanje emaila za verifikaciju",
+    "a_new_verification_link_has_been_sent_to_your_email_address": "Nova poveznica za verifikaciju je poslana na vašu email adresu",
+
+    "delete_account": "Izbriši Račun",
+    "once_your_account_is_deleted": "Jednom kada je vaš račun izbrisan, svi njegovi resursi i podaci će biti trajno izbrisani. Prije brisanja računa, preuzmite sve podatke ili informacije koje želite zadržati",
+    "are_you_sure_you_want_to_delete_your_account": "Jeste li sigurni da želite izbrisati svoj račun?",
+    "once_your_account_is_deleted_enter_pwd": "Jednom kada je vaš račun izbrisan, svi njegovi resursi i podaci će biti trajno izbrisani. Molimo unesite svoju lozinku kako biste potvrdili da želite trajno izbrisati svoj račun",
+
+    "update_password": "Ažuriraj Lozinku",
+    "ensure_your_account_is_using_a_long_random_password_to_stay_secure": "Pobrinite se da vaš račun koristi dugu, nasumičnu lozinku kako bi bio siguran",
+    "current_password": "Trenutna Lozinka",
+    "new_password": "Nova Lozinka",
+    "confirm_password": "Potvrdi Lozinku",
+
+    "log_in": "Prijava",
+    "sign_up": "Prijavi se",
+    "log_out": "Odjava",
+
+    "my_bills": "Moji Računi"
+}

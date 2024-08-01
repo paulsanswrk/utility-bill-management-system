@@ -38,16 +38,16 @@ const updatePassword = () => {
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">Update Password</h2>
+            <h2 class="text-lg font-medium text-white">{{$t('update_password')}}</h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Ensure your account is using a long, random password to stay secure.
+            <p class="mt-1 text-sm text-white">
+                {{$t('ensure_your_account_is_using_a_long_random_password_to_stay_secure')}}.
             </p>
         </header>
 
         <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
             <div>
-                <InputLabel for="current_password" value="Current Password" />
+                <InputLabel for="current_password" :value="$t('current_password')" />
 
                 <TextInput
                     id="current_password"
@@ -62,7 +62,7 @@ const updatePassword = () => {
             </div>
 
             <div>
-                <InputLabel for="password" value="New Password" />
+                <InputLabel for="password" :value="$t('new_password')" />
 
                 <TextInput
                     id="password"
@@ -77,7 +77,7 @@ const updatePassword = () => {
             </div>
 
             <div>
-                <InputLabel for="password_confirmation" value="Confirm Password" />
+                <InputLabel for="password_confirmation" :value="$t('confirm_password')" />
 
                 <TextInput
                     id="password_confirmation"
@@ -91,7 +91,7 @@ const updatePassword = () => {
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+                <PrimaryButton :disabled="form.processing">{{$t('save')}}</PrimaryButton>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -99,7 +99,7 @@ const updatePassword = () => {
                     leave-active-class="transition ease-in-out"
                     leave-to-class="opacity-0"
                 >
-                    <p v-if="form.recentlySuccessful" class="text-sm text-gray-600">Saved.</p>
+                    <p v-if="form.recentlySuccessful" class="text-sm text-white">{{$t('saved')}}.</p>
                 </Transition>
             </div>
         </form>

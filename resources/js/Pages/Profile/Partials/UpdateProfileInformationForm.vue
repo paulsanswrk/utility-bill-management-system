@@ -21,10 +21,10 @@ const form = useForm({
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">Profile Information</h2>
+            <h2 class="text-lg font-medium text-white">{{$t('profile_information')}}</h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Update your account's profile information and email address.
+            <p class="mt-1 text-sm text-white">
+                {{$t('update_your_accounts_profile_information_and_email_address')}}
             </p>
         </header>
 
@@ -61,15 +61,15 @@ const form = useForm({
             </div>
 
             <div v-if="mustVerifyEmail && user.email_verified_at === null">
-                <p class="text-sm mt-2 text-gray-800">
-                    Your email address is unverified.
+                <p class="text-sm mt-2 text-white">
+                    {{$t('your_email_address_is_unverified')}}.
                     <Link
                         :href="route('verification.send')"
                         method="post"
                         as="button"
-                        class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        class="underline text-sm text-white hover:text-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                     >
-                        Click here to re-send the verification email.
+                        {{$t('click_here_to_re_send_the_verification_email')}}.
                     </Link>
                 </p>
 
@@ -77,12 +77,12 @@ const form = useForm({
                     v-show="status === 'verification-link-sent'"
                     class="mt-2 font-medium text-sm text-green-600"
                 >
-                    A new verification link has been sent to your email address.
+                    {{$t('a_new_verification_link_has_been_sent_to_your_email_address')}}.
                 </div>
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+                <PrimaryButton :disabled="form.processing">{{$t('save')}}</PrimaryButton>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -90,7 +90,7 @@ const form = useForm({
                     leave-active-class="transition ease-in-out"
                     leave-to-class="opacity-0"
                 >
-                    <p v-if="form.recentlySuccessful" class="text-sm text-gray-600">Saved.</p>
+                    <p v-if="form.recentlySuccessful" class="text-sm text-white">{{$t('saved')}}.</p>
                 </Transition>
             </div>
         </form>

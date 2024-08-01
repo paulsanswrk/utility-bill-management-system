@@ -63,6 +63,11 @@ return [
             'throw' => false,
         ],
 
+        'emails' => [
+            'driver'     => 'local',
+            'root'       => storage_path('logs/emails'),
+        ],
+
     ],
 
     /*

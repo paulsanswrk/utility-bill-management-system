@@ -10,7 +10,7 @@ const props = withDefaults(
     {
         align: 'right',
         width: '48',
-        contentClasses: 'py-1 bg-white',
+        contentClasses: 'py-1',
     }
 );
 
@@ -61,7 +61,7 @@ const open = ref(false);
         >
             <div
                 v-show="open"
-                class="absolute z-50 mt-2 rounded-md shadow-lg"
+                class="acc-dropdown absolute z-50 mt-2 rounded-md shadow-lg"
                 :class="[widthClass, alignmentClasses]"
                 style="display: none"
                 @click="open = false"
@@ -73,3 +73,15 @@ const open = ref(false);
         </Transition>
     </div>
 </template>
+
+<style lang="scss">
+.acc-dropdown {
+    background-color: var(--surface-card);
+    a, button {
+        color: var(--text-color) !important;
+        &:hover {
+            background-color: var(--surface-ground) !important;
+        }
+    }
+}
+</style>

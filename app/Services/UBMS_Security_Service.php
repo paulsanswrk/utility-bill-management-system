@@ -7,11 +7,15 @@ class UBMS_Security_Service
 
     public $key_bit_len = 256; //32 bytes
     private $cipher_algo = 'aes-256-cfb';
+    private $master_key;
+    private $master_iv;
     private int $iv_len; //16 bytes
 
     function __construct()
     {
         $this->iv_len = openssl_cipher_iv_length($this->cipher_algo);
+        $this->master_key = hex2bin('ee87388b604cd15acb9910d3c888130f6b5c82ee0c9b4ab418681438b86313e0');
+        $this->master_iv = hex2bin('83b34e507160128c02f449105db0aed0');
     }
 
     public function gen_salt_bytes(): string
@@ -92,30 +96,41 @@ class UBMS_Security_Service
         return $this->gen_cipher_key("$sec_q|$sec_a", $key_salt);
     }
 
-    public function gen_keys_4_new_user(string $password, string $security_question, string $security_answer): array
+    public function gen_keys_4_new_user(string $password): array
     {
-        $security_answer_hash = $this->hash($security_answer, $this->gen_salt_bytes());
-        $session_key = $this->gen_key_bytes();
-        $pwd_ciphered = $this->encrypt($password, $session_key);
         $work_key_plain = $this->gen_key_bytes();
-        $key_salt = $this->gen_salt_bytes();
-        $pwd_key_plain = $this->gen_cipher_key($password, $key_salt);
-        $sec_qa_key_plain = $this->create_sec_qa_key($security_question, $security_answer, $key_salt);
-        $work_key_ciphered = $this->encrypt($work_key_plain, $pwd_key_plain);
-        $session_work_key_ciphered = $this->encrypt($work_key_plain, $session_key);
-        $pwd_key_ciphered = $this->encrypt($pwd_key_plain, $sec_qa_key_plain);
+        $work_key_encrypted = $this->encrypt($work_key_plain, $this->master_key);
 
         return [
-            'security_answer_hash' => $security_answer_hash,
-            'key_salt' => $key_salt,
-            'work_key_ciphered' => $work_key_ciphered,
-            'pwd_key_ciphered' => $pwd_key_ciphered,
-
-            //for session
-            'session_key' => $session_key,
-            'pwd_ciphered' => $pwd_ciphered,
-            'session_work_key_ciphered' => $session_work_key_ciphered,
+            'work_key_encrypted' => $work_key_encrypted,
         ];
+    }
+
+    public function encrypt_with_user_key(string $plaintext, string $work_key_encrypted_hex): string
+    {
+        $work_key = $this->decrypt(hex2bin($work_key_encrypted_hex), $this->master_key);
+        return $this->encrypt($plaintext, $work_key);
+    }
+
+    public function encrypt_file_with_user_key(string $fn, string $work_key_encrypted_hex)
+    {
+        $bytes = file_get_contents($fn);
+        $work_key = $this->decrypt(hex2bin($work_key_encrypted_hex), $this->master_key);
+        $bytes = $this->encrypt($bytes, $work_key);
+        file_put_contents($fn, $bytes);
+    }
+
+    public function decrypt_with_user_key(string $ciphertext, string $work_key_encrypted_hex): string
+    {
+        $work_key = $this->decrypt(hex2bin($work_key_encrypted_hex), $this->master_key);
+        return $this->decrypt($ciphertext, $work_key);
+    }
+
+    public function decrypt_file_with_user_key(string $fn, string $work_key_encrypted_hex): string
+    {
+        $bytes = file_get_contents($fn);
+        $work_key = $this->decrypt(hex2bin($work_key_encrypted_hex), $this->master_key);
+        return $this->decrypt($bytes, $work_key);
     }
 }
 

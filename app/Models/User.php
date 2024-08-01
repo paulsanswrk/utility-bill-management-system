@@ -3,13 +3,20 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasLocalePreference, MustVerifyEmail
 {
     use HasFactory, Notifiable;
+
+    public function preferredLocale()
+    {
+        return $this->language ?? 'hr';
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -20,12 +27,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        //added
-        'security_question',
-        'security_answer_hash',
-        'key_salt',
         'work_key_encrypted',
-        'pwd_key_encrypted',
     ];
 
     /**
@@ -37,10 +39,7 @@ class User extends Authenticatable
         'password',
         'remember_token',
         //added
-        'security_answer_hash',
-        'key_salt',
         'work_key_encrypted',
-        'pwd_key_encrypted',
     ];
 
     /**

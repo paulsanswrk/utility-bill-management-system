@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     Button: typeof import('primevue/button')['default']
     Calendar: typeof import('primevue/calendar')['default']
+    Checkbox: typeof import('primevue/checkbox')['default']
     Column: typeof import('primevue/column')['default']
     DataTable: typeof import('primevue/datatable')['default']
     Dialog: typeof import('primevue/dialog')['default']
@@ -16,6 +17,7 @@ declare module 'vue' {
     FileUpload: typeof import('primevue/fileupload')['default']
     FloatLabel: typeof import('primevue/floatlabel')['default']
     InputNumber: typeof import('primevue/inputnumber')['default']
-    InputText: typeof import('primevue/inputtext')['default']
+    Menu: typeof import('primevue/menu')['default']
+    MultiSelect: typeof import('primevue/multiselect')['default']
   }
 }
