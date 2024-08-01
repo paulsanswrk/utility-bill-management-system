@@ -47,7 +47,7 @@
     "get_zip": "Preuzmite arhivu",
     "edit": "Uredi",
     "edit_bill": "Uredi Račun",
-    "delete": "Izbriši",
+    "del": "Izbriši",
     "no_bills_found": "Nisu pronađeni računi.",
     "loading_data": "Učitavanje podataka. Molimo pričekajte",
     "total_records": "Ukupan broj zapisa",
@@ -86,6 +86,9 @@
     "log_in": "Prijava",
     "sign_up": "Prijavi se",
     "log_out": "Odjava",
+
+    "back_to_my_bills": "Back to My Bills",
+
 
     "my_bills": "Moji Računi"
 }

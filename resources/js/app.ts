@@ -27,9 +27,11 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 import {createI18n} from 'vue-i18n'
 
 const language = document.documentElement.lang;
-console.log({language})
+// console.log({language})
+
 
 const i18n = createI18n({
+    legacy: false,
     locale: language,
     fallbackLng: 'en',
     messages: {
@@ -40,7 +42,7 @@ const i18n = createI18n({
             ...hr_messages
         }
     }
-})
+});
 
 // console.log('hr_locale', hr_locale.hr)
 // console.log('en_locale', en_locale.en)

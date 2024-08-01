@@ -21,7 +21,7 @@ async function switch_locale(lang: string) {
 </script>
 
 <template>
-    <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-full mx-auto px-3 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
             <div class="flex">
                 <!-- Logo -->
@@ -40,7 +40,7 @@ async function switch_locale(lang: string) {
             </div>
 
 
-            <div class="sm:flex sm:items-center sm:ms-6">
+            <div class="flex items-center sm:ms-6 min-w-16">
                 <div>
                     <!-- Language Dropdown -->
                     <Button type="button" icon="pi pi-globe" text @click="toggle" aria-haspopup="true" aria-controls="overlay_menu"/>

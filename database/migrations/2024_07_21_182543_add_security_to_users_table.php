@@ -12,11 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('security_question')->nullable();
-            $table->string('security_answer_hash')->nullable(); //salt + hash
-            $table->string('key_salt')->nullable();
             $table->string('work_key_encrypted')->nullable();
-            $table->string('pwd_key_encrypted')->nullable();
+            $table->string('language')->nullable();
         });
     }
 
@@ -26,11 +23,12 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('security_question');
-            $table->dropColumn('security_answer_hash');
-            $table->dropColumn('key_salt');
+//            $table->dropColumn('security_question');
+//            $table->dropColumn('security_answer_hash');
+//            $table->dropColumn('key_salt');
             $table->dropColumn('work_key_encrypted');
-            $table->dropColumn('pwd_key_encrypted');
+            $table->dropColumn('language');
+//            $table->dropColumn('pwd_key_encrypted');
         });
     }
 };

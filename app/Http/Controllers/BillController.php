@@ -188,8 +188,12 @@ class BillController extends Controller
 
         $zip = Zip::create("package.zip");
 
-        foreach ($files as $f) {
-            $zip->add(storage_path("app/private/$f"), substr($f, strlen("bills/user_{$user_id}")));
+        foreach ($files as $fn) {
+            $full_fn = storage_path("app/private/$fn");
+            $cipher_bytes = file_get_contents($full_fn);
+            $plain_bytes = $this->ubms_security_service->decrypt_with_user_key($cipher_bytes, Auth::user()->work_key_encrypted);
+            $zip->addRaw($plain_bytes, substr($fn, strlen("bills/user_{$user_id}")));
+//            $zip->add($full_fn, substr($fn, strlen("bills/user_{$user_id}")));
         }
 
         return $zip;

@@ -4,15 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Models\UtilityCompany;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UtilityCompanyController extends Controller
 {
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return UtilityCompany::all();
+        return UtilityCompany::getCompaniesOfUser(Auth::id());
     }
 
     /**
@@ -21,13 +23,14 @@ class UtilityCompanyController extends Controller
     public function store(Request $request)
     {
         $utilityCompany = new UtilityCompany();
+        $utilityCompany->user_id = \Auth::id();
         $utilityCompany->name = $request->name;
         try {
             $utilityCompany->save();
-            return ['success' => true, 'companies' => UtilityCompany::all()];
+            return ['success' => true, 'companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
         } catch (\Exception $e) {
 
-            $message = str_contains($e->getMessage(), 'ix_utility_companies_name_unique')? 'This company already exists!': 'There was an error while processing your request';
+            $message = str_contains($e->getMessage(), 'ix_utility_companies_name_unique_per_user')? 'This company already exists!': 'There was an error while processing your request';
             return ['success' => false, 'message' => $message];
         }
     }

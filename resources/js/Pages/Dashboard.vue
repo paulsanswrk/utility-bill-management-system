@@ -16,8 +16,9 @@ import ConfirmPopup from 'primevue/confirmpopup';
 import {useConfirm} from "primevue/useconfirm";
 import {FilterMatchMode, FilterService} from "primevue/api";
 import {DataTableFilterMetaData, DataTableOperatorFilterMetaData} from "primevue/datatable";
-import {usePrimeVue} from "primevue/config";
+import {useI18n} from 'vue-i18n'
 
+const { t } = useI18n();
 const confirm = useConfirm();
 const toast = useToast();
 
@@ -59,6 +60,7 @@ async function add_company(name: string): Promise<void> {
 // region Bills
 
 const edit_bill_dlg_visible = ref(false);
+const edit_bill_dlg_title = ref('');
 
 
 const bill: Ref<Bill> = ref(default_bill());
@@ -91,7 +93,9 @@ async function load_bills() {
 }
 
 async function open_add_bill() {
+    edit_bill_dlg_title.value = t('add_bill');
     save_pressed.value = false;
+
     bill.value = default_bill();
     selected_company.value = null;
 
@@ -103,6 +107,7 @@ async function open_add_bill() {
 }
 
 async function open_edit_bill(bill_plain: Bill_Plain_Obj) {
+    edit_bill_dlg_title.value = t('edit_bill');
     save_pressed.value = false;
     bill.value = plain_to_bill(bill_plain);
     selected_company.value = utility_companies.value.find(c => c.id === bill_plain.utility_company_id) || null;
@@ -167,14 +172,31 @@ const save_pressed = ref(false);
 async function confirm_delete_bill(event: Event, bill_plain: Bill_Plain_Obj) {
     confirm.require({
         target: event.currentTarget as any,
-        message: 'Do you want to delete this bill?',
+        message: t('do_you_want_to_delete_this_bill'),
         icon: 'pi pi-info-circle',
         rejectClass: 'p-button-secondary p-button-outlined p-button-sm',
         acceptClass: 'p-button-danger p-button-sm',
-        rejectLabel: 'Cancel',
-        acceptLabel: 'Delete',
+        rejectLabel: t('cancel'),
+        acceptLabel: t('del'),
         accept: async () => {
             await delete_bill(bill_plain);
+        },
+    });
+}
+
+async function confirm_change_paid_status(event: Event) {
+    confirm.require({
+        target: event.currentTarget as any,
+        message: t('do_you_want_to_change_the_payment_status'),
+        icon: 'pi pi-info-circle',
+        rejectClass: 'p-button-secondary p-button-outlined p-button-sm',
+        acceptClass: 'p-button-danger p-button-sm',
+        rejectLabel: t('cancel'),
+        acceptLabel: t('yes'),
+        accept: async () => {
+        },
+        reject() {
+            bill.value.paid = !bill.value.paid;
         },
     });
 }
@@ -182,22 +204,24 @@ async function confirm_delete_bill(event: Event, bill_plain: Bill_Plain_Obj) {
 // endregion
 
 // region DataTable
-FilterService.register('filterByMonthRange', function (date: string, {from, to}) {
-    // console.log('filterByDateRange', arguments)
+FilterService.register('filterByMonthRange', function (date: string, [from, to]) {
+    console.log('filterByDateRange', arguments, from, to)
+    // return true;
     return (!from || dayjs(from).format('YYYY-MM') <= date) && (!to || date <= dayjs(to).format('YYYY-MM'))
 });
 
-FilterService.register('filterByDateRange', function (date: string, {from, to}) {
+FilterService.register('filterByDateRange', function (date: string, [from, to]) {
     // console.log('filterByDateRange', arguments)
-    return (!from || dayjs(from).format('YYYY-MM-dd') <= date) && (!to || date <= dayjs(to).format('YYYY-MM-dd'))
+    // console.log('filterByDateRange', {from: dayjs(from).format('YYYY-MM-DD'), date, to: dayjs(to).format('YYYY-MM-DD')})
+    return (!from || dayjs(from).format('YYYY-MM-DD') <= date) && (!to || date <= dayjs(to).format('YYYY-MM-DD'))
 });
 
 const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFilterMetaData }> = ref({
     global: {value: null, matchMode: FilterMatchMode.CONTAINS},
     utility_company_name: {value: null, matchMode: FilterMatchMode.IN,},
     paid: {value: null, matchMode: FilterMatchMode.EQUALS,},
-    bill_date: {value: [], matchMode: 'filterByMonthRange'},
-    payment_date: {value: [], matchMode: 'filterByDateRange'},
+    bill_date: {value: null, matchMode: 'filterByMonthRange'},
+    payment_date: {value: null, matchMode: 'filterByDateRange'},
 });
 // endregion
 
@@ -219,32 +243,28 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                 <div class="overflow-hidden shadow-sm sm:rounded-lg">
 
 
-                    <DataTable :value="bills" paginator paginator-position="top" :rows="10" :always-show-paginator="true"
-                               :rowsPerPageOptions="[10, 20, 50, 100]"
+                    <DataTable :value="bills" paginator paginator-position="top" :rows="10"
+                               :always-show-paginator="true"
+                               :rowsPerPageOptions="[10, 20, 50, 100]" sort-field="bill_date" :sort-order="-1"
                                v-model:filters="filters" filterDisplay="row"
-                               table-class="bills-table" table-style="width: 100%" showGridlines stripedRows>
+                               class="bills-table" table-style="width: 100%" showGridlines stripedRows>
 
                         <Column v-if="false" field="id" header="ID" sortable/>
 
-                        <Column field="bill_date" :header="$t('bill_date')" sortable>
+                        <Column field="bill_date" :header="$t('bill_date')" sortable :show-clear-button="true" :show-filter-menu="false">
 
                             <template #filter="{ filterModel, filterCallback }">
                                 <div class="flex">
                                     <FloatLabel>
-                                        <Calendar v-model="filterModel.value.from" view="month" dateFormat="yy-mm" @dateSelect="filterCallback()"
-                                                  :input-style="{width:'150px'}" showIcon icon-display="input"/>
-                                        <label>{{ $t('date_from') }}</label>
-                                    </FloatLabel>
-                                    <Button icon="pi pi-filter-slash" text severity="secondary" @click="filterModel.value.from = filterModel.value.to = null"/>
-                                </div>
-                                <div class="mt-4 flex">
-                                    <FloatLabel>
-                                        <Calendar v-model="filterModel.value.to" :min-date="filterModel.value.from" view="month"
+                                        <Calendar v-model="filterModel.value" selection-mode="range" view="month"
                                                   dateFormat="yy-mm" @dateSelect="filterCallback()"
-                                                  :input-style="{width:'150px'}" showIcon icon-display="input"/>
-                                        <label>{{ $t('date_to') }}</label>
+                                                  :input-style="{width:'180px'}" showIcon icon-display="input"/>
+                                        <label>{{ $t('bill_date') }}</label>
                                     </FloatLabel>
+                                    <Button v-if="false" icon="pi pi-filter-slash" text severity="secondary"
+                                            @click="filterModel.value = null"/>
                                 </div>
+
                             </template>
 
 
@@ -253,30 +273,28 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                         <Column field="utility_company_name" :header="$t('utility_company')" sortable>
 
                             <template #filter="{ filterModel, filterCallback }">
-                                <MultiSelect v-model="filterModel.value" @change="filterCallback()" :options="utility_companies.map(c=>c.name)"
-                                             :placeholder="$t('any')" class="p-column-filter" style="min-width: 14rem" :maxSelectedLabels="1"/>
+                                <MultiSelect v-model="filterModel.value" @change="filterCallback()"
+                                             :options="utility_companies.map(c=>c.name)"
+                                             :placeholder="$t('any')" class="p-column-filter" style="min-width: 14rem"
+                                             :maxSelectedLabels="1"/>
                             </template>
 
                         </Column>
 
-                        <Column field="payment_date" :header="$t('payment_date')" sortable>
+                        <Column field="payment_date" :header="$t('payment_date')" sortable :show-clear-button="true" :show-filter-menu="false">
 
                             <template #filter="{ filterModel, filterCallback }">
                                 <div class="flex">
                                     <FloatLabel>
-                                        <Calendar v-model="filterModel.value.from" dateFormat="yy-mm-dd" @dateSelect="filterCallback()" showButtonBar
-                                                  :input-style="{width:'150px'}" showIcon icon-display="input"/>
-                                        <label>{{ $t('date_from') }}</label>
+                                        <Calendar v-model="filterModel.value" dateFormat="yy-mm-dd" selection-mode="range"
+                                                  @dateSelect="filterCallback()" showButtonBar
+                                                  :input-style="{width:'220px'}" showIcon icon-display="input"/>
+                                        <label>{{ $t('payment_date') }}</label>
                                     </FloatLabel>
-                                    <Button icon="pi pi-filter-slash" text severity="secondary" @click="filterModel.value.from = filterModel.value.to = null"/>
+                                    <Button v-if="false" icon="pi pi-filter-slash" text severity="secondary"
+                                            @click="filterModel.value.from = filterModel.value.to = null"/>
                                 </div>
-                                <div class="mt-4 flex">
-                                    <FloatLabel>
-                                        <Calendar v-model="filterModel.value.to" :min-date="filterModel.value.from" dateFormat="yy-mm-dd" @dateSelect="filterCallback()" showButtonBar
-                                                  :input-style="{width:'150px'}" showIcon icon-display="input"/>
-                                        <label>{{ $t('date_to') }}</label>
-                                    </FloatLabel>
-                                </div>
+
                             </template>
 
                         </Column>
@@ -284,11 +302,12 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                         <Column field="paid" :header="$t('paid')" sortable>
 
                             <template #body="{data}">
-                                <Checkbox :value="data.paid" disabled/>
+                                <Checkbox v-model="data.paid" binary disabled/>
                             </template>
 
                             <template #filter="{ filterModel, filterCallback }">
-                                <Dropdown v-model="filterModel.value" @change="filterCallback()" :options="[true, false]"
+                                <Dropdown v-model="filterModel.value" @change="filterCallback()"
+                                          :options="[true, false]"
                                           :placeholder="$t('any')" class="p-column-filter" style="width: 120px">
                                     <template #option="{option}">
                                         {{ option ? $t('paid') : $t('unpaid') }}
@@ -309,7 +328,8 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
 
                         <Column :header="`${$t('bill')} PDF`">
                             <template #body="{data}">
-                                <a v-if="data.has_bill_pdf" :href="`/api/bills/pdf/${data.id}/bill/download`" class="pdf-link" target="_blank" :title="`${$t('download')} PDF`">
+                                <a v-if="data.has_bill_pdf" :href="`/api/bills/pdf/${data.id}/bill/download`"
+                                   class="pdf-link" target="_blank" :title="`${$t('download')} PDF`">
                                     <img src="/img/pdf-svgrepo-com.svg"/>
                                 </a>
                             </template>
@@ -317,7 +337,9 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
 
                         <Column :header="`${$t('payment_confirmation')} PDF`">
                             <template #body="{data}">
-                                <a v-if="data.has_payment_pdf" :href="`/api/bills/pdf/${data.id}/payment_confirmation/download`" class="pdf-link" target="_blank" :title="`${$t('download')} PDF`">
+                                <a v-if="data.has_payment_pdf"
+                                   :href="`/api/bills/pdf/${data.id}/payment_confirmation/download`" class="pdf-link"
+                                   target="_blank" :title="`${$t('download')} PDF`">
                                     <img src="/img/pdf-svgrepo-com.svg"/>
                                 </a>
                             </template>
@@ -325,8 +347,10 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
 
                         <Column :header="$t('actions')">
                             <template #body="{data}">
-                                <Button severity="info" :aria-label="$t('edit')" class="mr-2 mb-2" size="small" outlined :label="$t('edit')" @click="open_edit_bill(data)"/>
-                                <Button severity="danger" :aria-label="$t('delete')" class=" mb-2" size="small" outlined :label="$t('delete')" @click="confirm_delete_bill($event, data)"/>
+                                <Button severity="info" :aria-label="$t('edit')" class="mr-2 mb-2" size="small" outlined
+                                        :label="$t('edit')" @click="open_edit_bill(data)"/>
+                                <Button severity="danger" :aria-label="$t('del')" class=" mb-2" size="small" outlined
+                                        :label="$t('del')" @click="confirm_delete_bill($event, data)"/>
                             </template>
                         </Column>
 
@@ -339,21 +363,25 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                         </template>
 
                         <template #paginatorstart>
-                            <em class="hidden md:block" style="margin: 0 25px;">{{ $t('total_records') }}: {{ bills.length }}</em>
+                            <em class="hidden md:block" style="margin: 0 25px;">{{ $t('total_records') }}:
+                                {{ bills.length }}</em>
                         </template>
 
                         <template #paginatorend>
-                            <Button icon="pi pi-plus" rounded :aria-label="$t('add_bill')" :title="$t('add_bill')" @click="open_add_bill()"/>
-                            <Button icon="pi pi-download" rounded class="ml-2" :aria-label="$t('get_zip')" :title="$t('get_zip')" @click="get_zip()"/>
+                            <Button icon="pi pi-plus" rounded :aria-label="$t('add_bill')" :title="$t('add_bill')"
+                                    @click="open_add_bill()"/>
+                            <Button icon="pi pi-download" rounded class="ml-2" :aria-label="$t('get_zip')"
+                                    :title="$t('get_zip')" @click="get_zip()"/>
                         </template>
 
                     </DataTable>
 
 
-                    <Dialog v-model:visible="edit_bill_dlg_visible" modal :header="$t('edit_bill')" content-class="dlg-edit-bill"
+                    <Dialog v-model:visible="edit_bill_dlg_visible" modal :header="edit_bill_dlg_title"
+                            content-class="dlg-edit-bill"
                             :style="{ width: '900px', maxWidth: '95%' }">
 
-                        <div class="feedback-ctr flex align-items-center gap-3 mt-4 mb-6">
+                        <div class="feedback-ctr flex align-items-center gap-3 mt-4 mb-2">
 
                             <FloatLabel class="w-full md:w-24rem">
                                 <Dropdown id="utility_company" v-model="selected_company"
@@ -364,8 +392,14 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                                 />
                                 <label for="utility_company">{{ $t('utility_company') }}</label>
                             </FloatLabel>
-                            <span class="feedback text-danger" v-if="save_pressed && typeof selected_company === 'string'">{{ $t('the_company_isnt_saved') }}</span>
-                            <span class="feedback text-danger" v-else-if="save_pressed && !(selected_company as any)?.id">{{ $t('this_field_is_required') }}</span>
+                            <span class="feedback text-danger"
+                                  v-if="save_pressed && typeof selected_company === 'string'">{{
+                                    $t('the_company_isnt_saved')
+                                }}</span>
+                            <span class="feedback text-danger"
+                                  v-else-if="save_pressed && !(selected_company as any)?.id">{{
+                                    $t('this_field_is_required')
+                                }}</span>
 
                             <Button type="button" :label="$t('add_company')"
                                     :disabled="typeof selected_company !== 'string' || selected_company.trim() === '' || utility_companies.some(c=>c.name === (selected_company as string)?.trim())"
@@ -373,40 +407,60 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
 
                         </div>
 
-                        <div class="md:flex align-items-start gap-3 mb-6">
+                        <div class="md:flex align-items-start gap-3 mb-2">
                             <div class="feedback-ctr w-full md:w-24rem">
                                 <FloatLabel class="">
-                                    <Calendar v-model="bill.bill_date" view="month" dateFormat="yy-mm" showIcon icon-display="input"
+                                    <Calendar v-model="bill.bill_date" view="month" dateFormat="yy-mm" showIcon
+                                              icon-display="input"
                                               class="w-full"
                                               input-id="bill_date"/>
                                     <label for="bill_date">{{ $t('bill_date') }}</label>
                                 </FloatLabel>
-                                <span class="feedback text-danger" v-if="save_pressed && !bill.bill_date">{{ $t('this_field_is_required') }}</span>
+                                <span class="feedback text-danger"
+                                      v-if="save_pressed && !bill.bill_date">{{ $t('this_field_is_required') }}</span>
                             </div>
 
-                            <div class="feedback-ctr w-full md:w-24rem md:mt-0 sm:mt-6">
+                            <div class="feedback-ctr w-full md:w-24rem mb-2">
                                 <FloatLabel class="">
-                                    <Calendar v-model="bill.payment_date" view="date" class="w-full" showIcon icon-display="input"
+                                    <Calendar v-model="bill.payment_date" view="date" class="w-full" showIcon
+                                              icon-display="input"
                                               dateFormat="yy-mm-dd"
                                               input-id="payment_date"/>
                                     <label for="payment_date">{{ $t('payment_date') }}</label>
                                 </FloatLabel>
-                                <span class="feedback text-danger" v-if="save_pressed && !bill.payment_date">{{ $t('this_field_is_required') }}</span>
+                                <span class="feedback text-danger" v-if="save_pressed && !bill.payment_date">{{
+                                        $t('this_field_is_required')
+                                    }}</span>
                             </div>
 
-                            <FloatLabel class="w-full md:w-24rem md:mt-0 sm:mt-6">
-                                <InputNumber mode="currency" currency="EUR" locale="en-US" class="w-full"
-                                             v-model.number="bill.amount" input-id="amount"/>
-                                <label for="amount">{{ $t('amount') }}</label>
-                            </FloatLabel>
+                            <div class="w-full md:w-24rem md:mt-0 mb-2">
+                                <FloatLabel>
+                                    <InputNumber mode="currency" currency="EUR" locale="en-US" class="w-full"
+                                                 v-model.number="bill.amount" input-id="amount"/>
+                                    <label for="amount">{{ $t('amount') }}</label>
+                                </FloatLabel>
+                            </div>
+
+                            <div class="w-full md:w-24rem md:mt-0 mt-5 mb-6">
+                                <FloatLabel>
+                                    <Toolbar style="padding: 0.6rem">
+                                        <template #start>
+                                            <Checkbox class="w-full" :binary="true" v-model="bill.paid" input-id="paid" @click="confirm_change_paid_status"/>
+                                        </template>
+                                    </Toolbar>
+                                    <label for="paid">{{ $t('paid') }}</label>
+                                    <input type="hidden" class="p-filled"/>
+                                </FloatLabel>
+                            </div>
 
                         </div>
 
                         <div class="flex w-full align-items-start gap-3 mb-6">
 
-                            <div class="feedback-ctr p-float-label" style="min-width: 200px;">
+                            <div class="feedback-ctr p-float-label">
                                 <div v-if="bill.has_bill_pdf">
-                                    <a :href="`/api/bills/pdf/${bill.id}/bill`" class="pdf-link" target="_blank" title="View PDF">
+                                    <a :href="`/api/bills/pdf/${bill.id}/bill`" class="pdf-link" target="_blank"
+                                       title="View PDF">
                                         <img src="/img/pdf-svgrepo-com.svg"/>
                                     </a>
                                 </div>
@@ -423,22 +477,26 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                                 </FileUpload>
                                 <input type="hidden" class="p-filled"/>
                                 <label for="bill_pdf_path">{{ $t('bill') }}</label>
-                                <span class="feedback text-danger" v-if="save_pressed && !bill.has_bill_pdf">{{ $t('this_field_is_required') }}</span>
+                                <span class="feedback text-danger" v-if="save_pressed && !bill.has_bill_pdf">{{
+                                        $t('this_field_is_required')
+                                    }}</span>
                             </div>
 
 
-                            <div class="p-float-label" style="min-width: 200px;">
+                            <div class="p-float-label" style="min-width: 130px; max-width: 54%;">
                                 <div v-if="bill.has_payment_pdf">
-                                    <a :href="`/api/bills/pdf/${bill.id}/payment_confirmation`" class="pdf-link" target="_blank" title="View PDF">
+                                    <a :href="`/api/bills/pdf/${bill.id}/payment_confirmation`" class="pdf-link"
+                                       target="_blank" title="View PDF">
                                         <img src="/img/pdf-svgrepo-com.svg"/>
                                     </a>
                                 </div>
-                                <FileUpload v-else name="pdf" auto :url="`/api/upload/${bill.id ?? 0}/payment_confirmation`"
+                                <FileUpload v-else name="pdf" auto
+                                            :url="`/api/upload/${bill.id ?? 0}/payment_confirmation`"
                                             :multiple="false" accept=".pdf" :show-cancel-button="false"
                                             :choose-label="$t('upload_payment_confirmation')"
                                             :show-upload-button="false"
                                             @before-send="beforeSend($event)"
-                                            @upload="bill.has_payment_pdf = true"
+                                            @upload="bill.has_payment_pdf = true; bill.paid = true"
                                             :maxFileSize="1000000" input-id="payment_confirmation_pdf_path">
                                     <template #empty>
                                         <p>{{ $t('drag_and_drop_file_to_here_to_upload') }}</p>
@@ -480,6 +538,13 @@ h2 {
 }
 
 .bills-table {
+
+    @media screen and (max-width: 450px) {
+        .p-paginator {
+            padding: 0.5rem 0rem;
+        }
+    }
+
     .pdf-link {
         display: block;
         width: 40px;
