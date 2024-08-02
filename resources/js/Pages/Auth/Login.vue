@@ -8,6 +8,7 @@ import TextInput from '@/Components/TextInput.vue';
 import {Head, Link, useForm} from '@inertiajs/vue3';
 import axios from "axios";
 import {getCookie} from "typescript-cookie";
+import {useReCaptcha} from "vue-recaptcha-v3";
 
 defineProps<{
     canResetPassword?: boolean;
@@ -19,10 +20,17 @@ const form = useForm({
     email: '',
     password: '',
     remember: false,
+    captcha_token: null,
 });
+
+const {executeRecaptcha, recaptchaLoaded} = useReCaptcha();
 
 const submit = async () => {
     await axios.get('/sanctum/csrf-cookie');
+
+    await recaptchaLoaded();
+    form.captcha_token = await executeRecaptcha('login');
+
     form.post(route('login'), {
         onFinish: () => {
             form.reset('password');
@@ -40,6 +48,8 @@ const submit = async () => {
         </div>
 
         <form @submit.prevent="submit">
+
+
             <div>
                 <InputLabel for="email" :value="$t('user_email')"/>
 
@@ -74,7 +84,7 @@ const submit = async () => {
             <div class="block mt-4">
                 <label class="flex items-center">
                     <Checkbox name="remember" v-model:checked="form.remember"/>
-                    <span class="ms-2 text-sm text-white">{{$t('remember_me')}}</span>
+                    <span class="ms-2 text-sm text-white">{{ $t('remember_me') }}</span>
                 </label>
             </div>
 
@@ -84,11 +94,11 @@ const submit = async () => {
                     :href="route('password.request')"
                     class="underline text-sm text-white hover:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                    {{$t('forgot_your_password')}}?
+                    {{ $t('forgot_your_password') }}?
                 </Link>
 
                 <PrimaryButton class="ms-4" :class="{ 'opacity-25': form.processing }" :disabled="form.processing">
-                    {{$t('log_in')}}
+                    {{ $t('log_in') }}
                 </PrimaryButton>
 
 
@@ -99,7 +109,7 @@ const submit = async () => {
                     :href="route('register')"
                     class="underline block text-sm text-white hover:text-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                    {{$t('sign_up')}}
+                    {{ $t('sign_up') }}
                 </Link>
             </div>
 

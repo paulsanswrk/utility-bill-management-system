@@ -6,16 +6,24 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import {Head, Link, useForm} from '@inertiajs/vue3';
 import axios from "axios";
+import {useReCaptcha} from "vue-recaptcha-v3";
 
 const form = useForm({
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
+    captcha_token: null,
 });
+
+const {executeRecaptcha, recaptchaLoaded} = useReCaptcha();
 
 const submit = async () => {
     await axios.get('/sanctum/csrf-cookie');
+
+    await recaptchaLoaded();
+    form.captcha_token = await executeRecaptcha('register');
+
     form.post(route('register'), {
         onFinish: () => {
             form.reset('password', 'password_confirmation');

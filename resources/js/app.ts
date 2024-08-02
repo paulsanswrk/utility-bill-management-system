@@ -22,6 +22,8 @@ import 'primeflex/primeflex.css'
 import '@/../css/theme.scss'
 import axios from "axios";
 
+import { VueReCaptcha, useReCaptcha } from 'vue-recaptcha-v3';
+
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 import {createI18n} from 'vue-i18n'
@@ -54,16 +56,10 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob<DefineComponent>('./Pages/**/*.vue')),
     setup({el, App, props, plugin}) {
+        const captchaKey = props.initialPage.props.recaptcha_site_key;
         createApp({render: () => h(App, props)})
             .use(plugin)
-            /*            .use(i18nVue, {
-                            resolve: async (lang: any) => {
-                                debugger
-                                console.log('resolve', lang)
-                                const langs = import.meta.glob('../../lang/!*.json');
-                                return await langs[`../../lang/${lang}.json`]();
-                            }
-                        })*/
+            .use(VueReCaptcha, { siteKey: captchaKey } )
             .use(i18n)
             .use(ZiggyVue)
             .use(PrimeVue, {locale: language == 'hr' ? hr_primevue_locale.hr : en_primevue_locale.en})
@@ -77,8 +73,6 @@ createInertiaApp({
         color: '#4B5563',
     },
 }).then(r => {
-    // const lang = getActiveLanguage(); // en
-    // console.log('lang', lang)
 });
 
 
