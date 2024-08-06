@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bill;
+use App\Models\Household;
 use App\Models\UtilityCompany;
 use App\Services\UBMS_Security_Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
@@ -25,22 +27,24 @@ class BillController extends Controller
     /**
      * @return mixed[]
      */
-    private function getBillsOfCurrentUser()
+    private function getBillsOfCurrentUser(int $household_id)
     {
-        //TODO: use FK instead
-        $companies = UtilityCompany::all()->where('user_id', '=', Auth::id())->groupBy('id');
+        $bills = Bill::all()
+            ->where('user_id', '=', Auth::id())
+            ->where('household_id', '=', $household_id)
+            ->whereNotNull('company_id');
 
-        return Bill::all()->where('user_id', '=', Auth::id())->whereNotNull('data')->values()
-            ->map(function ($bill) use ($companies) {
-                $data = json_decode($bill->data);
+        return $bills
+            ->map(function ($bill) {
                 return [
                     'id' => $bill->id,
-                    'utility_company_id' => $data->utility_company_id,
-                    'utility_company_name' => $companies[$data->utility_company_id][0]?->name,
-                    'amount' => $data->amount,
-                    'bill_date' => $data->bill_date,
-                    'payment_date' => $data->payment_date,
-                    'paid' => $data->paid,
+                    'household_id' => $bill->household_id,
+                    'utility_company_id' => $bill->company_id,
+                    'utility_company_name' => $bill->company?->name,
+                    'amount' => $bill->amount,
+                    'paid' => $bill->paid,
+                    'bill_date' => $bill->bill_date,
+                    'payment_date' => $bill->payment_date,
                     'has_bill_pdf' => !empty($bill->bill_pdf_path),
                     'has_payment_pdf' => !empty($bill->payment_confirmation_pdf_path),
                 ];
@@ -51,10 +55,23 @@ class BillController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $household_id = $request->household_id;
+        if (!$household_id) {
+            $first_household = DB::table('households')
+                ->where('user_id', '=', Auth::id())
+                ->orderBy('name')
+                ->limit(1)
+                ->get()->first();
+            $household_id = $first_household?->id ?? 0;
+        }
 //        return Bill::all();
-        return ['user_bills' => $this->getBillsOfCurrentUser(), 'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
+        return [
+            'user_bills' => $this->getBillsOfCurrentUser($household_id),
+            'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id()),
+            'user_households' => Household::getHouseholdsOfUser(Auth::id()),
+        ];
     }
 
     /**
@@ -64,8 +81,9 @@ class BillController extends Controller
     {
         $bill = new Bill();
         $bill->user_id = Auth::id();
-        $bill->household_id = 1; //TODO: define household_id in frontend
-//        $bill->data = 'test data';
+        $bill->household_id = $request->household_id;
+        $bill->cipher_key_encrypted = bin2hex($this->ubms_security_service->gen_key_4_bill());
+
         $bill->save();
 
         return ['success' => true, 'new_id' => $bill->id];
@@ -92,17 +110,14 @@ class BillController extends Controller
             $bill_id = $request->id;
             $bill = Bill::find($bill_id);
 
-
-            $bill->data = json_encode([
-                'utility_company_id' => $request->utility_company_id,
-                'amount' => $request->amount,
-                'bill_date' => $request->bill_date,
-                'payment_date' => $request->payment_date,
-                'paid' => $request->paid,
-            ]);
+            $bill->company_id = $request->utility_company_id;
+            $bill->bill_date = $request->bill_date;
+            $bill->payment_date = $request->payment_date;
+            $bill->amount = $request->amount;
+            $bill->paid = $request->paid;
 
             //move PDFs to the permanent location if still in Temp
-            $permanent_bill_pdf_path = $bill->get_bill_pdf_path($request->utility_company_id, $request->bill_date, 'bill');
+            $permanent_bill_pdf_path = $bill->get_bill_pdf_path('bill');
             if (!empty($bill->bill_pdf_path) && $permanent_bill_pdf_path !== $bill->bill_pdf_path) {
                 //TODO: log unsuccessful attempts
                 $success = Storage::move($bill->bill_pdf_path, $permanent_bill_pdf_path);
@@ -111,7 +126,7 @@ class BillController extends Controller
                 $bill->bill_pdf_path = $permanent_bill_pdf_path;
             }
 
-            $permanent_bill_pdf_path = $bill->get_bill_pdf_path($request->utility_company_id, $request->bill_date, 'payment_confirmation');
+            $permanent_bill_pdf_path = $bill->get_bill_pdf_path('payment_confirmation');
             if (!empty($bill->payment_confirmation_pdf_path) && $permanent_bill_pdf_path !== $bill->payment_confirmation_pdf_path) {
                 $success = Storage::move($bill->payment_confirmation_pdf_path, $permanent_bill_pdf_path);
                 Log::error("failed to move file $bill->payment_confirmation_pdf_path to $permanent_bill_pdf_path");
@@ -119,7 +134,10 @@ class BillController extends Controller
             }
 
             $bill->save();
-            return ['success' => true, 'user_bills' => $this->getBillsOfCurrentUser(), 'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
+
+            $household_id = $request->household_id;
+
+            return ['success' => true, 'user_bills' => $this->getBillsOfCurrentUser($household_id), 'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -133,6 +151,11 @@ class BillController extends Controller
     {
         $bill = Bill::find($request->id);
 
+        if ($bill->user_id != Auth::id())
+            return ['success' => false, 'message' => 'Bill not found'];
+
+        $household_id = $request->household_id;
+
         if (!empty($bill->bill_pdf_path))
             Storage::delete($bill->bill_pdf_path);
 
@@ -141,7 +164,36 @@ class BillController extends Controller
 
         Bill::destroy($request->id);
 
-        return ['success' => true, 'user_bills' => $this->getBillsOfCurrentUser(), 'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
+        return ['success' => true, 'user_bills' => $this->getBillsOfCurrentUser($household_id), 'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
+    }
+
+    public function delete_pdf(Request $request)
+    {
+        $bill = Bill::find($request->id);
+
+        if ($bill->user_id != Auth::id())
+            return ['success' => false, 'message' => 'Bill not found'];
+
+        $household_id = $request->household_id;
+        $doc_type = $request->doctype;
+
+        switch ($doc_type) {
+            case 'bill':
+                $path = $bill->bill_pdf_path;
+                $bill->bill_pdf_path = null;
+                break;
+            case 'payment_confirmation':
+                $path = $bill->payment_confirmation_pdf_path;
+                $bill->payment_confirmation_pdf_path = null;
+                break;
+        }
+
+        if (!empty($path))
+            Storage::delete($path);
+
+        $bill->save();
+
+        return ['success' => true, 'user_bills' => $this->getBillsOfCurrentUser($household_id)];
     }
 
     public function pdf(Request $request)
@@ -173,7 +225,7 @@ class BillController extends Controller
         ];
 
         $bytes = file_get_contents($storage_path);
-        $bytes = $this->ubms_security_service->decrypt_with_user_key($bytes, Auth::user()->work_key_encrypted);
+        $bytes = $this->ubms_security_service->decrypt_with_user_key($bytes, $bill->cipher_key_encrypted);
 
         return response()->streamDownload(function () use ($bytes) {
             echo $bytes;
@@ -184,16 +236,28 @@ class BillController extends Controller
     {
         $user_id = Auth::id();
 
-        $files = Storage::disk('private')->allFiles("bills/user_{$user_id}");
+        $bills = Bill::all()->where('user_id', '=', $user_id)->whereNotNull('company_id')->values();
 
         $zip = Zip::create("package.zip");
 
-        foreach ($files as $fn) {
-            $full_fn = storage_path("app/private/$fn");
-            $cipher_bytes = file_get_contents($full_fn);
-            $plain_bytes = $this->ubms_security_service->decrypt_with_user_key($cipher_bytes, Auth::user()->work_key_encrypted);
-            $zip->addRaw($plain_bytes, substr($fn, strlen("bills/user_{$user_id}")));
-//            $zip->add($full_fn, substr($fn, strlen("bills/user_{$user_id}")));
+        $suffix_4_dup_zip_paths = [];
+
+        foreach ($bills as $bill) {
+            foreach (['bill_pdf_path' => 'bill', 'payment_confirmation_pdf_path' => 'payment_confirmation'] as $doc_type => $fn) {
+                if ($bill->$doc_type) {
+                    $zip_path = "{$bill->household->name}/{$bill->bill_date}/{$bill->company->name}/{$fn}.pdf";
+
+                    $suffix = $suffix_4_dup_zip_paths[$zip_path] ?? 0;
+                    if ($suffix)
+                        $zip_path = "{$bill->household->name}/{$bill->bill_date}/{$bill->company->name}/{$fn}-{$suffix}.pdf";
+                    $suffix_4_dup_zip_paths[$zip_path] = $suffix + 1;
+
+                    $full_fn = storage_path("app/{$bill->$doc_type}");
+                    $cipher_bytes = file_get_contents($full_fn);
+                    $plain_bytes = $this->ubms_security_service->decrypt_with_user_key($cipher_bytes, $bill->cipher_key_encrypted);
+                    $zip->addRaw($plain_bytes, $zip_path);
+                }
+            }
         }
 
         return $zip;

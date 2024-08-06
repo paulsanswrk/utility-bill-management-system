@@ -13,10 +13,10 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
-    captcha_token: null,
+    captcha_token: '',
 });
 
-const {executeRecaptcha, recaptchaLoaded} = useReCaptcha();
+const {executeRecaptcha, recaptchaLoaded} = useReCaptcha()!;
 
 const submit = async () => {
     await axios.get('/sanctum/csrf-cookie');

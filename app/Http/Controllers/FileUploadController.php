@@ -28,7 +28,9 @@ class FileUploadController extends Controller
 
         $bill_pdf = $request->file('pdf');
 
-        $this->ubms_security_service->encrypt_file_with_user_key($bill_pdf->path(), Auth::user()->work_key_encrypted);
+        $bill = Bill::find($bill_id);
+
+        $this->ubms_security_service->encrypt_file_with_user_key($bill_pdf->path(), $bill->cipher_key_encrypted);
         $path = $bill_pdf->store(Bill::pdf_tmp_upload_path, 'private');
 
 

@@ -55,7 +55,7 @@ async function switch_locale(lang: string) {
                             <span class="inline-flex rounded-md">
                                 <button
                                     type="button"
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white hover:text-gray-200 focus:outline-none transition ease-in-out duration-150"
+                                    class="inline-flex items-center px-1 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white hover:text-gray-200 focus:outline-none transition ease-in-out duration-150"
                                 >
                                     {{ $page.props.auth.user.name }}
 

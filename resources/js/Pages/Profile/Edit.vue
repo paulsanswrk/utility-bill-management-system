@@ -19,7 +19,7 @@ defineProps<{
             <a href="/" class="block mb-6">
                 <Button :label="$t('back_to_my_bills')" icon="pi pi-chevron-left" size="small" />
             </a>
-            <h2 class="font-semibold text-3xl text-white leading-tight">Profile</h2>
+            <h2 class="font-semibold text-3xl text-white leading-tight">{{$t('profile')}}</h2>
         </template>
 
         <div class="py-12">

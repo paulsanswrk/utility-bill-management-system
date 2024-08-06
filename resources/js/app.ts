@@ -22,15 +22,13 @@ import 'primeflex/primeflex.css'
 import '@/../css/theme.scss'
 import axios from "axios";
 
-import { VueReCaptcha, useReCaptcha } from 'vue-recaptcha-v3';
-
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
-
+import {VueReCaptcha} from 'vue-recaptcha-v3';
 import {createI18n} from 'vue-i18n'
 
 const language = document.documentElement.lang;
-// console.log({language})
 
+document.title = language === 'hr'? hr_messages.app_title : en_messages.app_title;
+const appName = document.title; //import.meta.env.VITE_APP_NAME || 'Laravel';
 
 const i18n = createI18n({
     legacy: false,
@@ -46,8 +44,6 @@ const i18n = createI18n({
     }
 });
 
-// console.log('hr_locale', hr_locale.hr)
-// console.log('en_locale', en_locale.en)
 
 axios.defaults.withCredentials = true;
 axios.defaults.withXSRFToken = true;
@@ -56,10 +52,10 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) => resolvePageComponent(`./Pages/${name}.vue`, import.meta.glob<DefineComponent>('./Pages/**/*.vue')),
     setup({el, App, props, plugin}) {
-        const captchaKey = props.initialPage.props.recaptcha_site_key;
+        const captchaKey = props.initialPage.props.recaptcha_site_key as string;
         createApp({render: () => h(App, props)})
             .use(plugin)
-            .use(VueReCaptcha, { siteKey: captchaKey } )
+            .use(VueReCaptcha as any, { siteKey: captchaKey } )
             .use(i18n)
             .use(ZiggyVue)
             .use(PrimeVue, {locale: language == 'hr' ? hr_primevue_locale.hr : en_primevue_locale.en})

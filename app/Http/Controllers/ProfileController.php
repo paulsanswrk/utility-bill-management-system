@@ -70,7 +70,6 @@ class ProfileController extends Controller
             $user->save();
         } else {
 //            \Session::put('language', $request->language);
-
             $response = new \Illuminate\Http\Response();
             return $response->cookie("user_lang", $request->language);
         }

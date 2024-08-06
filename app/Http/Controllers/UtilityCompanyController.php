@@ -29,7 +29,6 @@ class UtilityCompanyController extends Controller
             $utilityCompany->save();
             return ['success' => true, 'companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
         } catch (\Exception $e) {
-
             $message = str_contains($e->getMessage(), 'ix_utility_companies_name_unique_per_user')? 'This company already exists!': 'There was an error while processing your request';
             return ['success' => false, 'message' => $message];
         }

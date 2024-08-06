@@ -27,4 +27,8 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/zip', [BillController::class, 'zip'])->middleware(['auth', 'verified']);
 
+Route::get('/clear-cache', function() {
+    $exitCode = Artisan::call('cache:clear');
+});
+
 require __DIR__.'/auth.php';

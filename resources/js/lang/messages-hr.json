@@ -39,14 +39,18 @@
 
     "bill": "Račun",
     "payment_confirmation": "Potvrda Plaćanja",
+    "bill_successfully_saved": "Račun uspješno spremljen",
+    "bill_successfully_deleted": "Račun uspješno izbrisan",
+    "document_deleted": "Dokument izbrisan",
 
     "download": "Preuzmi",
 
     "actions": "Akcije",
     "add_bill": "Dodaj Račun",
-    "get_zip": "Preuzmite arhivu",
+    "get_zip": "Preuzmi Arhivu",
     "edit": "Uredi",
     "edit_bill": "Uredi Račun",
+    "do_you_want_to_delete_this_bill": "Želite li izbrisati ovaj račun?",
     "del": "Izbriši",
     "no_bills_found": "Nisu pronađeni računi.",
     "loading_data": "Učitavanje podataka. Molimo pričekajte",
@@ -56,14 +60,31 @@
     "utility_company": "Komunalno Poduzeće",
     "add_company": "Dodaj Poduzeće",
     "select_a_company_or_add_a_new_company": "Odaberite poduzeće ili dodajte novo poduzeće",
+    "enter_a_company_name": "Unesite ime poduzeća",
     "the_company_isnt_saved": "Poduzeće nije pohranjeno",
     "this_field_is_required": "Ovo polje je obavezno",
+    "do_you_want_to_change_the_payment_status": "Želite li promijeniti status plaćanja?",
     "drag_and_drop_file_to_here_to_upload": "Povucite i ispustite datoteku ovdje za prijenos",
     "upload_bill": "Prenesi Račun",
     "upload_payment_confirmation": "Prenesi Potvrdu Plaćanja",
+    "view_pdf": "Pregledaj PDF",
+    "company_successfully_added": "Poduzeće uspješno dodano",
+    "do_you_want_to_delete_this_doc": "Želite li izbrisati ovaj dokument?",
     "save": "Spremi",
     "saved": "Spremljeno",
     "cancel": "Otkaži",
+    "yes": "Da",
+    "success": "Uspjeh",
+    "error": "Greška",
+
+    "add_household": "Dodaj Kućanstvo",
+    "household_name": "Ime Kućanstva",
+    "rename_household": "Preimenuj Kućanstvo",
+    "delete_household": "Izbriši Kućanstvo",
+    "do_you_want_to_delete_this_household": "Želite li izbrisati ovo kućanstvo:",
+    "household_successfully_added": "Kućanstvo uspješno dodano",
+    "household_successfully_deleted": "Kućanstvo uspješno izbrisano",
+    "household_successfully_renamed": "Kućanstvo uspješno preimenovano",
 
     "profile": "Profil",
     "profile_information": "Informacije o Profilu",
@@ -87,8 +108,7 @@
     "sign_up": "Prijavi se",
     "log_out": "Odjava",
 
-    "back_to_my_bills": "Back to My Bills",
-
+    "back_to_my_bills": "Natrag na Moje Račune",
 
     "my_bills": "Moji Računi"
 }

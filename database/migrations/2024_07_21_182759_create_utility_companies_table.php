@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('utility_companies', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->string('name', 500);
             $table->unique(['user_id', 'name'], 'ix_utility_companies_name_unique_per_user');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('id')->on('users')->nullOnDelete();
 //            $table->timestamps();
         });
     }

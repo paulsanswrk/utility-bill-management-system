@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Household;
 use App\Models\User;
 use App\Rules\Recaptcha;
 use App\Services\UBMS_Security_Service;
@@ -10,6 +11,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
@@ -47,17 +49,18 @@ class RegisteredUserController extends Controller
             'captcha_token'  => [new Recaptcha],
         ]);
 
-        $keys = $this->ubms_security_service->gen_keys_4_new_user($request->password);
-
-        session([
-            'work_key_encrypted' => bin2hex($keys['work_key_encrypted']), //is it needed?
-        ]);
-
+        $lang = $request->cookie('user_lang')  ?? 'en';
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'work_key_encrypted' => bin2hex($keys['work_key_encrypted']),
+            'language' => $lang,
+        ]);
+
+        $lang = $request->cookie('user_lang');
+        Household::create([
+            'name' => trans('Default Household', [], $lang),
+            'user_id' => $user->id,
         ]);
 
         event(new Registered($user));

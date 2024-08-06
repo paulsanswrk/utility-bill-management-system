@@ -8,14 +8,15 @@ class UBMS_Security_Service
     public $key_bit_len = 256; //32 bytes
     private $cipher_algo = 'aes-256-cfb';
     private $master_key;
-    private $master_iv;
+//    private $master_iv;
     private int $iv_len; //16 bytes
 
     function __construct()
     {
         $this->iv_len = openssl_cipher_iv_length($this->cipher_algo);
-        $this->master_key = hex2bin('ee87388b604cd15acb9910d3c888130f6b5c82ee0c9b4ab418681438b86313e0');
-        $this->master_iv = hex2bin('83b34e507160128c02f449105db0aed0');
+//        $this->master_key = hex2bin('ee87388b604cd15acb9910d3c888130f6b5c82ee0c9b4ab418681438b86313e0');
+        $this->master_key = hex2bin(\Config::get('app.ubms_master_key'));
+//        $this->master_iv = hex2bin('83b34e507160128c02f449105db0aed0');
     }
 
     public function gen_salt_bytes(): string
@@ -96,14 +97,12 @@ class UBMS_Security_Service
         return $this->gen_cipher_key("$sec_q|$sec_a", $key_salt);
     }
 
-    public function gen_keys_4_new_user(string $password): array
+    public function gen_key_4_bill(): string
     {
         $work_key_plain = $this->gen_key_bytes();
-        $work_key_encrypted = $this->encrypt($work_key_plain, $this->master_key);
+        $key_encrypted = $this->encrypt($work_key_plain, $this->master_key);
 
-        return [
-            'work_key_encrypted' => $work_key_encrypted,
-        ];
+        return $key_encrypted;
     }
 
     public function encrypt_with_user_key(string $plaintext, string $work_key_encrypted_hex): string

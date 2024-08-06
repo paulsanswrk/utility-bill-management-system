@@ -14,12 +14,11 @@ return new class extends Migration
         Schema::create('households', function (Blueprint $table) {
             $table->id();
             $table->string('name', 400);
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();
+            $table->unique(['user_id', 'name'], 'ix_households_name_unique_per_user');
+            $table->foreign('user_id', 'fk_households_users')->references('id')->on('users')->nullOnDelete();
         });
-
-        DB::table('households')->insert([
-            'name' => 'Household 1',
-        ]);
     }
 
     /**

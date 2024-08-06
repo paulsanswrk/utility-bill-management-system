@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'ubms_master_key' => env('ubms_master_key'),
+
 ];

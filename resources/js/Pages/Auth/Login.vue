@@ -20,16 +20,16 @@ const form = useForm({
     email: '',
     password: '',
     remember: false,
-    captcha_token: null,
+    captcha_token: '',
 });
 
-const {executeRecaptcha, recaptchaLoaded} = useReCaptcha();
+const {executeRecaptcha, recaptchaLoaded} = useReCaptcha()!;
 
 const submit = async () => {
     await axios.get('/sanctum/csrf-cookie');
 
-    await recaptchaLoaded();
-    form.captcha_token = await executeRecaptcha('login');
+    // await recaptchaLoaded();
+    // form.captcha_token = await executeRecaptcha('login');
 
     form.post(route('login'), {
         onFinish: () => {

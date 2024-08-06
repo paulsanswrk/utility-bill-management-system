@@ -52,7 +52,7 @@ const closeModal = () => {
         <DangerButton @click="confirmUserDeletion">{{$t('delete_account')}}</DangerButton>
 
         <Modal :show="confirmingUserDeletion" @close="closeModal">
-            <div class="p-6">
+            <div class="p-6" style="background-color: var(--surface-card)">
                 <h2 class="text-lg font-medium text-white">
                     {{$t('are_you_sure_you_want_to_delete_your_account')}}
                 </h2>

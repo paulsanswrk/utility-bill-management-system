@@ -13,6 +13,10 @@ class UtilityCompany extends Model
     use HasApiTokens;
     public $timestamps = false;
 
+    protected $fillable = [
+        'name',
+    ];
+
     public static function getCompaniesOfUser(int $userId)
     {
         return UtilityCompany::all()->where('user_id', '=', $userId)->values();
