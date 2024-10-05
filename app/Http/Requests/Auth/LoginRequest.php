@@ -43,9 +43,9 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        Request::validate([
+        /*Request::validate([
             'captcha_token'  => [new Recaptcha],
-        ]);
+        ]);*/
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());

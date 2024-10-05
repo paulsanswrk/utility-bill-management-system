@@ -1,3 +1,11 @@
 {
-    "Default Household": "Zadano Kućanstvo"
+    "Default Household": "Zadano Kućanstvo",
+    "auth.failed": "Ove vjerodajnice se ne podudaraju s našim zapisima.",
+    "auth.password": "Pružena lozinka je netočna.",
+    "auth.throttle": "Previše pokušaja prijave. Molimo pokušajte ponovno za :seconds sekundi.",
+    "passwords.reset": "Vaša lozinka je resetirana.",
+    "passwords.sent": "Poslali smo vam email s poveznicom za resetiranje lozinke.",
+    "passwords.throttled": "Molimo pričekajte prije ponovnog pokušaja.",
+    "passwords.token": "Ovaj token za resetiranje lozinke je nevažeći.",
+    "passwords.user": "Ne možemo pronaći korisnika s tom email adresom."
 }

@@ -46,7 +46,7 @@ class RegisteredUserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'captcha_token'  => [new Recaptcha],
+//            'captcha_token'  => [new Recaptcha],
         ]);
 
         $lang = $request->cookie('user_lang')  ?? 'en';

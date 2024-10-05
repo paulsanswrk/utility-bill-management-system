@@ -23,7 +23,7 @@ const form = useForm({
     captcha_token: '',
 });
 
-const {executeRecaptcha, recaptchaLoaded} = useReCaptcha()!;
+// const {executeRecaptcha, recaptchaLoaded} = useReCaptcha()!;
 
 const submit = async () => {
     await axios.get('/sanctum/csrf-cookie');

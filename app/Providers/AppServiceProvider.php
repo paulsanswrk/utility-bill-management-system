@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -27,6 +28,11 @@ class AppServiceProvider extends ServiceProvider
         });
 
         \App::setLocale('hr');
+
+        Validator::extend(
+            'recaptcha',
+            'App\\Validators\\ReCaptcha@validate'
+        );
 
     }
 }
