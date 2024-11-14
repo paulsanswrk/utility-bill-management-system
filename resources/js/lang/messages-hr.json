@@ -109,6 +109,9 @@
     "log_out": "Odjava",
 
     "back_to_my_bills": "Natrag na Moje Račune",
+    "notifications": "Obavijesti",
+    "setup_notifications": "Postavite obavijesti za neplaćene račune",
+
 
     "my_bills": "Moji Računi"
 }

@@ -74,4 +74,16 @@ class ProfileController extends Controller
             return $response->cookie("user_lang", $request->language);
         }
     }
+
+    public function set_notifications(Request $request)
+    {
+        if (Auth::check()) {
+            $user = User::find(Auth::id());
+            $user->notifications = $request->notifications;
+            $user->save();
+        }
+        return Redirect::route('profile.edit');
+    }
+
+
 }

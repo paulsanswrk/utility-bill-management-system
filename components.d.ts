@@ -21,6 +21,7 @@ declare module 'vue' {
     Menu: typeof import('primevue/menu')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
     ProgressSpinner: typeof import('primevue/progressspinner')['default']
+    SelectButton: typeof import('primevue/selectbutton')['default']
     SplitButton: typeof import('primevue/splitbutton')['default']
     TabPanel: typeof import('primevue/tabpanel')['default']
     TabView: typeof import('primevue/tabview')['default']

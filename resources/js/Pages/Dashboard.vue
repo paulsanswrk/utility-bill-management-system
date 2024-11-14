@@ -349,7 +349,7 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
     <Head :title="$t('my_bills')"/>
 
     <AuthenticatedLayout>
-        <template #header>
+        <template v-if="false" #header>
             <h2 class="text-white ">
                 {{ $t('my_bills') }}
             </h2>
@@ -388,7 +388,7 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                                 </SplitButton>
                             </template>
 
-                            <DataTable :value="bills" paginator paginator-position="top" :rows="10"
+                            <DataTable :value="bills" paginator paginator-position="bottom" :rows="10"
                                        :always-show-paginator="true"
                                        :rowsPerPageOptions="[10, 20, 50, 100]" sort-field="bill_date" :sort-order="-1"
                                        v-model:filters="filters" filterDisplay="row"

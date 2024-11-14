@@ -28,5 +28,6 @@ Route::post('/bills/delete_pdf', [BillController::class, 'delete_pdf'])->middlew
 Route::post('/upload/{bill_id}/{doc_type}', [FileUploadController::class, 'upload'])->name('upload')->middleware('auth:sanctum');
 
 Route::post('/profile/set_locale/{language}', [ProfileController::class, 'set_locale']);
+Route::post('/profile/set_notifications', [ProfileController::class, 'set_notifications'])->name('set_notifications');
 
 
