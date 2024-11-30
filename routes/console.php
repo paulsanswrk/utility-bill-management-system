@@ -15,6 +15,8 @@ Schedule::call(function () {
         ->whereTime('created_at', '<', Carbon::today()->subtract('day', 1))
         ->whereNull('company_id')->delete();
     Log::channel('ubms')->info("$del_cnt bills deleted");
+
+
 })->hourly();
 
 /*Schedule::call(function () {
@@ -35,8 +37,15 @@ Schedule::call(function () {
 
 
 Schedule::call(function () {
-    Log::channel('ubms')->info("Process Bill Notifications");
+//    Log::channel('ubms')->info("Process Bill Notifications");
     $ProcessBillNotifications = new ProcessBillNotifications();
     $ProcessBillNotifications->handle();
+
+    //email_change_requests cleanup
+    $deleted_requests = DB::table('email_change_requests')
+        ->where('expires_at', '>', Carbon::now())
+        ->delete();
+    Log::channel('ubms')->info("$deleted_requests email change requests deleted");
+
 })->dailyAt('10:00');
 

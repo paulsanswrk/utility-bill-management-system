@@ -3,6 +3,7 @@
 use App\Http\Controllers\BillController;
 use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ManageUsersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FileUploadController;
@@ -30,4 +31,10 @@ Route::post('/upload/{bill_id}/{doc_type}', [FileUploadController::class, 'uploa
 Route::post('/profile/set_locale/{language}', [ProfileController::class, 'set_locale']);
 Route::post('/profile/set_notifications', [ProfileController::class, 'set_notifications'])->name('set_notifications');
 
+Route::get("/users", [ManageUsersController::class, 'index'])->middleware('auth:sanctum');
+Route::post("/update_user", [ManageUsersController::class, 'update_user'])->middleware('auth:sanctum');
+Route::post("/change_pwd", [ManageUsersController::class, 'change_pwd'])->middleware('auth:sanctum');
+Route::post("/users/send_pwd_reset_link", [ManageUsersController::class, 'send_pwd_reset_link'])->middleware('auth:sanctum');
+Route::post("/users/impersonate", [ManageUsersController::class, 'impersonate'])->middleware('auth:sanctum');
+Route::post("/users/exit_impersonation", [ManageUsersController::class, 'exit_impersonation'])->middleware('auth:sanctum');
 

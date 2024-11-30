@@ -33,6 +33,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'is_impersonating' => session()->has('impersonating_admin_id'),
             ],
             'recaptcha_site_key' => config('services.google_recaptcha.site_key'),
         ];

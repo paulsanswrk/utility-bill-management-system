@@ -18,6 +18,11 @@ async function switch_locale(lang: string) {
     await axios.post(`/api/profile/set_locale/${lang}`);
     location.reload();
 }
+
+async function exit_impersonation() {
+    await axios.post(`/api/users/exit_impersonation`);
+    location.assign('/');
+}
 </script>
 
 <template>
@@ -26,17 +31,11 @@ async function switch_locale(lang: string) {
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <Link :href="route('dashboard')">
+                    <Link href="/">
                         <ApplicationLogo class=""/>
                     </Link>
                 </div>
 
-                <!-- Navigation Links -->
-                <div v-if="false" class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                        My Bills
-                    </NavLink>
-                </div>
             </div>
 
 
@@ -58,6 +57,7 @@ async function switch_locale(lang: string) {
                                     class="inline-flex items-center px-1 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white hover:text-gray-200 focus:outline-none transition ease-in-out duration-150"
                                 >
                                     {{ $page.props.auth.user.name }}
+                                    <span v-if="$page.props.auth.is_impersonating"> (impersonating)</span>
 
                                     <svg
                                         class="ms-2 -me-0.5 h-4 w-4"
@@ -77,6 +77,8 @@ async function switch_locale(lang: string) {
 
                         <template #content>
                             <DropdownLink :href="route('profile.edit')"> {{ $t('profile') }}</DropdownLink>
+                            <DropdownLink v-if="$page.props.auth.user.is_admin" :href="route('manage_users')"> {{ $t('users') }}</DropdownLink>
+                            <DropdownLink v-if="$page.props.auth.is_impersonating" href="javascript:;" @click.prevent="exit_impersonation()"> {{ $t('exit_impersonation') }}</DropdownLink>
                             <DropdownLink :href="route('logout')" method="post" as="button">
                                 {{ $t('log_out') }}
                             </DropdownLink>
