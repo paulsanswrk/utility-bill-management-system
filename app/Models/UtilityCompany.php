@@ -15,10 +15,16 @@ class UtilityCompany extends Model
 
     protected $fillable = [
         'name',
+        'household_id',
     ];
 
-    public static function getCompaniesOfUser(int $userId)
+    public static function getCompaniesForHH(Household|int $household)
     {
-        return UtilityCompany::all()->where('user_id', '=', $userId)->values();
+        if (is_int($household)) {
+            $household = Household::find($household);
+        }
+
+        return $household->utility_companies()->select('utility_companies.id', 'utility_companies.name')->orderBy('name')->get();
+//        return UtilityCompany::all()->where('household_id', '=', $household_id)->values();
     }
 }

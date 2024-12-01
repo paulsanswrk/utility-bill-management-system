@@ -10,12 +10,27 @@ class Household extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
         'name',
     ];
 
-    public static function getHouseholdsOfUser(int $userId)
+/*    public static function getHouseholdsOfUser(int $userId)
     {
         return Household::all()->where('user_id', '=', $userId)->select('id', 'name')->sortBy('name')->values();
+    }*/
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'household_user', 'household_id', 'user_id');
     }
+
+    public function bills()
+    {
+        return $this->hasMany(Bill::class);
+    }
+
+    public function utility_companies()
+    {
+        return $this->hasMany(UtilityCompany::class);
+    }
+
 }

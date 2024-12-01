@@ -66,4 +66,15 @@ class User extends Authenticatable implements HasLocalePreference, MustVerifyEma
     {
         return $this->hasOne(EmailChangeRequest::class, 'id', 'id');
     }
+
+    public function households()
+    {
+        return $this->belongsToMany(Household::class, 'household_user', 'user_id', 'household_id');
+    }
+
+/*    public function bills() //not working correctly
+    {
+        return $this->hasManyThrough(Bill::class, Household::class, 'user_id', 'household_id', 'id', 'id');
+    }*/
+
 }

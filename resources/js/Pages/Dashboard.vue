@@ -17,7 +17,7 @@ import ConfirmPopup from 'primevue/confirmpopup';
 import ConfirmDialog from 'primevue/confirmdialog';
 import {useConfirm} from "primevue/useconfirm";
 import {FilterMatchMode, FilterService} from "primevue/api";
-import {DataTableFilterMetaData, DataTableOperatorFilterMetaData} from "primevue/datatable";
+import {DataTableFilterEvent, DataTableFilterMetaData, DataTableOperatorFilterMetaData} from "primevue/datatable";
 import {useI18n} from 'vue-i18n'
 import {HouseHold} from "@/Data/HouseHold";
 
@@ -47,7 +47,13 @@ const dlg_add_company_visible = ref(false);
 const adding_company_name = ref('');
 
 async function add_company(): Promise<void> {
-    const {data: {success, message, companies}} = await axios.post('/api/companies/store', {name: adding_company_name.value});
+    const {
+        data: {
+            success,
+            message,
+            companies
+        }
+    } = await axios.post('/api/companies/store', {name: adding_company_name.value, hh_id: current_household.value!.id});
 
     if (success) {
         toast.add({severity: 'success', summary: t('success'), detail: t('company_successfully_added'), life: 3000});
@@ -107,7 +113,12 @@ async function rename_household(h: HouseHold) {
 async function remove_household(id: number) {
     const {data: {success, message}} = await axios.post('/api/households/destroy', {id});
     if (success) {
-        toast.add({severity: 'success', summary: t('success'), detail: t('household_successfully_deleted'), life: 3000});
+        toast.add({
+            severity: 'success',
+            summary: t('success'),
+            detail: t('household_successfully_deleted'),
+            life: 3000
+        });
         households.value.splice(households.value.findIndex(h => h.id === id), 1);
         current_household.value = households.value[0];
         hh_active_tab_index.value = 0;
@@ -125,6 +136,7 @@ const edit_bill_dlg_title = ref('');
 
 
 const bill: Ref<Bill> = ref(default_bill());
+const total_amount: Ref<number> = ref(0);
 
 function default_bill(): Bill {
     return {
@@ -145,13 +157,13 @@ async function load_bills() {
 
     const {
         data: {
-            user_bills,
-            user_companies,
-            user_households
+            user_households,
+            hh_bills,
+            hh_companies,
         }
     } = await axios.get('/api/bills', {params: {household_id: current_household.value?.id}});
-    bills.value = user_bills ?? [];
-    utility_companies.value = user_companies ?? [];
+    bills.value = hh_bills ?? [];
+    utility_companies.value = hh_companies ?? [];
     households.value = user_households ?? [];
     current_household.value = households.value[hh_active_tab_index.value] ?? households.value[0];
 
@@ -212,19 +224,23 @@ async function save_bill(bill: Bill): Promise<void> {
 }
 
 async function delete_bill(bill_plain: Bill_Plain_Obj) {
-    const {data: {user_bills, user_companies}} = await axios.post('/api/bills/destroy', {
+    const {data: {user_bills, companies}} = await axios.post('/api/bills/destroy', {
         id: bill_plain.id,
         household_id: current_household.value?.id
     });
     toast.add({severity: 'success', summary: t('success'), detail: t('bill_successfully_deleted'), life: 3000});
     if (user_bills)
         bills.value = user_bills;
-    if (user_companies)
-        utility_companies.value = user_companies;
+    if (companies)
+        utility_companies.value = companies;
 }
 
 async function delete_doc(bill: Bill, doctype: string) {
-    const {data: {success, message, user_bills}} = await axios.post('/api/bills/delete_pdf', {id: bill.id, doctype, household_id: current_household.value?.id});
+    const {data: {success, message, user_bills}} = await axios.post('/api/bills/delete_pdf', {
+        id: bill.id,
+        doctype,
+        household_id: current_household.value?.id
+    });
     if (success) {
         toast.add({severity: 'success', summary: t('success'), detail: t('document_deleted'), life: 3000});
         bill[doctype === 'bill' ? 'has_bill_pdf' : 'has_payment_pdf'] = false;
@@ -321,13 +337,13 @@ async function confirm_change_paid_status(event: Event) {
 // endregion
 
 // region Filtering
-FilterService.register('filterByMonthRange', function (date: string, filter:Date) {
+FilterService.register('filterByMonthRange', function (date: string, filter: Date) {
     // console.log('filterByDateRange', arguments, filter)
     // return true;
     return dayjs(filter).format('YYYY-MM') == date;
 });
 
-FilterService.register('filterByDateRange', function (date: string, filter:Date) {
+FilterService.register('filterByDateRange', function (date: string, filter: Date) {
     // console.log('filterByDateRange', arguments)
     // console.log('filterByDateRange', {from: dayjs(from).format('YYYY-MM-DD'), date, to: dayjs(to).format('YYYY-MM-DD')})
     return dayjs(filter).format('YYYY-MM-DD') == date;
@@ -340,6 +356,15 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
     bill_date: {value: null, matchMode: 'filterByMonthRange'},
     payment_date: {value: null, matchMode: 'filterByDateRange'},
 });
+
+async function on_filter(e: DataTableFilterEvent) {
+    total_amount.value = e.filteredValue.map((b: Bill) => b.amount).reduce((a: number, b: string) => a + parseFloat(b), 0).toLocaleString('de-DE', {
+        style: 'currency',
+        currency: 'EUR'
+    })
+    console.log(arguments)
+}
+
 // endregion
 
 
@@ -360,200 +385,227 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                 <div class="overflow-hidden shadow-sm sm:rounded-lg">
 
                     <ProgressSpinner v-if=waiting class="w-full"/>
-                    <TabView v-else :scrollable="true" class="hh-tabs" v-model:active-index="hh_active_tab_index"
-                             @update:active-index="hh_tab_changed($event)">
 
-                        <TabPanel v-for="(household, n_hh) in households" :key="household.id">
+                    <template v-else>
 
-                            <template #header>
-                                <span v-if="n_hh !== hh_active_tab_index">{{ household.name }}</span>
-                                <SplitButton v-else :label="household.name"
-                                             :model="[{label:t('rename_household'), command: ()=>{household_editor_active=true; editing_hh_id=household.id; editing_hh_name=household.name}},
+                        <div v-if="!!current_household" class="lg:float-right mb-3 lg:mb-0 lg:mt-2 mr-1 text-right">
+                            <Button outlined :aria-label="$t('add_bill')" :label="$t('add_bill')"
+                                    :title="$t('add_bill')"
+                                    @click="open_add_bill()"/>
+                            <Button outlined class="ml-2" :aria-label="$t('get_zip')" :label="$t('get_zip')"
+                                    :title="$t('get_zip')" @click="get_zip()"/>
+                        </div>
+
+                        <TabView :scrollable="true" class="hh-tabs" v-model:active-index="hh_active_tab_index"
+                                 @update:active-index="hh_tab_changed($event)">
+
+
+                            <TabPanel v-for="(household, n_hh) in households" :key="household.id">
+
+                                <template #header>
+                                    <span v-if="n_hh !== hh_active_tab_index">{{ household.name }}</span>
+                                    <SplitButton v-else :label="household.name"
+                                                 :model="[{label:t('rename_household'), command: ()=>{household_editor_active=true; editing_hh_id=household.id; editing_hh_name=household.name}},
                                                 {label:t('delete_household'), command: ()=>confirm_delete_hh(household)}]"
-                                             text class="hh-tab p-0">
+                                                 text class="hh-tab p-0">
 
-                                    <Inplace :closable="true" close-icon="pi pi-check"
-                                             :active="household_editor_active && editing_hh_id==household.id"
-                                             @update:active="(value: boolean) => household_editor_active=value"
-                                             @close="rename_household(household)">
+                                        <Inplace :closable="true" close-icon="pi pi-check"
+                                                 :active="household_editor_active && editing_hh_id==household.id"
+                                                 @update:active="(value: boolean) => household_editor_active=value"
+                                                 @close="rename_household(household)">
+                                            <template #display>
+                                                {{ household.name }}
+                                            </template>
+                                            <template #content>
+                                                <InputText v-model="household.name" autofocus
+                                                           @keydown.space="$event.stopPropagation()"/>
+                                            </template>
+
+                                        </Inplace>
+                                    </SplitButton>
+                                </template>
+
+                                <DataTable :value="bills" paginator paginator-position="bottom" :rows="10"
+                                           :always-show-paginator="true"
+                                           :rowsPerPageOptions="[10, 20, 50, 100]" sort-field="bill_date"
+                                           :sort-order="-1"
+                                           v-model:filters="filters" filterDisplay="row" @filter="on_filter($event)"
+                                           class="bills-table" table-style="width: 100%" showGridlines stripedRows>
+
+                                    <Column field="bill_date" :header="$t('bill_date')" sortable
+                                            :show-clear-button="true"
+                                            :show-filter-menu="false">
+
+                                        <template #filter="{ filterModel, filterCallback }">
+                                            <div class="flex">
+                                                <FloatLabel>
+                                                    <Calendar v-model="filterModel.value"
+                                                              view="month"
+                                                              dateFormat="yy-mm" @dateSelect="filterCallback()"
+                                                              :input-style="{width:'180px'}" showIcon
+                                                              icon-display="input"/>
+                                                    <label>{{ $t('bill_date') }}</label>
+                                                </FloatLabel>
+                                                <Button v-if="false" icon="pi pi-filter-slash" text severity="secondary"
+                                                        @click="filterModel.value = null"/>
+                                            </div>
+
+                                        </template>
+
+
+                                    </Column>
+
+                                    <Column field="utility_company_name" :header="$t('utility_company')" sortable>
+
+                                        <template #filter="{ filterModel, filterCallback }">
+                                            <MultiSelect v-model="filterModel.value" @change="filterCallback()"
+                                                         :options="utility_companies.map(c=>c.name)"
+                                                         :placeholder="$t('any')" class="p-column-filter"
+                                                         style="min-width: 14rem"
+                                                         :maxSelectedLabels="1"/>
+                                        </template>
+
+                                    </Column>
+
+                                    <Column field="payment_date" :header="$t('payment_date')" sortable
+                                            :show-clear-button="true"
+                                            :show-filter-menu="false">
+
+                                        <template #filter="{ filterModel, filterCallback }">
+                                            <div class="flex">
+                                                <FloatLabel>
+                                                    <Calendar v-model="filterModel.value" dateFormat="yy-mm-dd"
+                                                              @dateSelect="filterCallback()" showButtonBar
+                                                              :input-style="{width:'220px'}" showIcon
+                                                              icon-display="input"/>
+                                                    <label>{{ $t('payment_date') }}</label>
+                                                </FloatLabel>
+                                                <Button v-if="false" icon="pi pi-filter-slash" text severity="secondary"
+                                                        @click="filterModel.value = null"/>
+                                            </div>
+
+                                        </template>
+
+                                    </Column>
+
+                                    <Column field="paid" :header="$t('paid')" sortable>
+
+                                        <template #body="{data}">
+                                            <Checkbox v-model="data.paid" binary disabled/>
+                                        </template>
+
+                                        <template #filter="{ filterModel, filterCallback }">
+                                            <Dropdown v-model="filterModel.value" @change="filterCallback()"
+                                                      :options="[true, false]"
+                                                      :placeholder="$t('any')" class="p-column-filter"
+                                                      style="width: 120px">
+                                                <template #option="{option}">
+                                                    {{ option ? $t('paid') : $t('unpaid') }}
+                                                </template>
+                                                <template #value="{value}">
+                                                    {{
+                                                        value == true ? $t('paid') : (value === false ? $t('unpaid') : $t('any'))
+                                                    }}
+                                                </template>
+                                            </Dropdown>
+                                        </template>
+
+                                    </Column>
+
+                                    <Column field="amount" :header="$t('amount')" sortable>
+
+                                        <template #body="{data}">
+                                            {{ data.amount ? formatCurrency(data.amount) : '' }}
+                                        </template>
+
+                                        <template #filter>
+                                            Total: {{ total_amount }}
+                                        </template>
+
+                                    </Column>
+
+                                    <Column :header="`${$t('bill')} PDF`">
+                                        <template #body="{data}">
+                                            <a v-if="data.has_bill_pdf"
+                                               :href="`/api/bills/pdf/${data.id}/bill/download`"
+                                               class="pdf-link" target="_blank" :title="`${$t('download')} PDF`">
+                                                <img src="/img/pdf-svgrepo-com.svg"/>
+                                            </a>
+                                        </template>
+                                    </Column>
+
+                                    <Column :header="`${$t('payment_confirmation')} PDF`">
+                                        <template #body="{data}">
+                                            <a v-if="data.has_payment_pdf"
+                                               :href="`/api/bills/pdf/${data.id}/payment_confirmation/download`"
+                                               class="pdf-link"
+                                               target="_blank" :title="`${$t('download')} PDF`">
+                                                <img src="/img/pdf-svgrepo-com.svg"/>
+                                            </a>
+                                        </template>
+                                    </Column>
+
+                                    <Column :header="$t('actions')">
+                                        <template #body="{data}">
+                                            <Button severity="info" :aria-label="$t('edit')" class="mr-2 mb-2"
+                                                    size="small"
+                                                    outlined
+                                                    :label="$t('edit')" @click="open_edit_bill(data)"/>
+                                            <Button severity="danger" :aria-label="$t('del')" class=" mb-2" size="small"
+                                                    outlined
+                                                    :label="$t('del')" @click="confirm_delete_bill($event, data)"/>
+                                        </template>
+                                    </Column>
+
+                                    <template #empty>{{ $t('no_bills_found') }}</template>
+
+                                    <template #loading>
+                                        <div style="background-color: #333; padding: 30px; margin-top: 140px;">
+                                            {{ $t('loading_data') }}
+                                        </div>
+                                    </template>
+
+                                    <template #paginatorstart>
+                                        <em class="hidden lg:block" style="margin: 0 25px;">{{ $t('total_records') }}:
+                                            {{ bills.length }}</em>
+                                    </template>
+
+                                    <template #paginatorend>
+                                        <div v-if="false" class="mt-2 md:mt-0">
+                                            <Button outlined :aria-label="$t('add_bill')" :label="$t('add_bill')"
+                                                    :title="$t('add_bill')"
+                                                    @click="open_add_bill()"/>
+                                            <Button outlined class="ml-2" :aria-label="$t('get_zip')"
+                                                    :label="$t('get_zip')"
+                                                    :title="$t('get_zip')" @click="get_zip()"/>
+                                        </div>
+                                    </template>
+
+                                </DataTable>
+
+                            </TabPanel>
+
+                            <TabPanel>
+                                <template #header>
+
+                                    <Inplace :closable="true" @open="editing_hh_name=''" @close="add_household" unstyled
+                                             close-icon="pi pi-check"
+                                             class="tab-add">
                                         <template #display>
-                                            {{ household.name }}
+                                            <Button text icon="pi pi-plus" :title="$t('add_household')"/>
                                         </template>
                                         <template #content>
-                                            <InputText v-model="household.name" autofocus
+                                            <InputText v-model="editing_hh_name" :placeholder="$t('household_name')"
+                                                       autofocus class="max-w-24 sm:max-w-none"
                                                        @keydown.space="$event.stopPropagation()"/>
                                         </template>
-
                                     </Inplace>
-                                </SplitButton>
-                            </template>
-
-                            <DataTable :value="bills" paginator paginator-position="bottom" :rows="10"
-                                       :always-show-paginator="true"
-                                       :rowsPerPageOptions="[10, 20, 50, 100]" sort-field="bill_date" :sort-order="-1"
-                                       v-model:filters="filters" filterDisplay="row"
-                                       class="bills-table" table-style="width: 100%" showGridlines stripedRows>
-
-                                <Column v-if="false" field="id" header="ID" sortable/>
-
-                                <Column field="bill_date" :header="$t('bill_date')" sortable :show-clear-button="true"
-                                        :show-filter-menu="false">
-
-                                    <template #filter="{ filterModel, filterCallback }">
-                                        <div class="flex">
-                                            <FloatLabel>
-                                                <Calendar v-model="filterModel.value"
-                                                          view="month"
-                                                          dateFormat="yy-mm" @dateSelect="filterCallback()"
-                                                          :input-style="{width:'180px'}" showIcon icon-display="input"/>
-                                                <label>{{ $t('bill_date') }}</label>
-                                            </FloatLabel>
-                                            <Button v-if="false" icon="pi pi-filter-slash" text severity="secondary"
-                                                    @click="filterModel.value = null"/>
-                                        </div>
-
-                                    </template>
-
-
-                                </Column>
-
-                                <Column field="utility_company_name" :header="$t('utility_company')" sortable>
-
-                                    <template #filter="{ filterModel, filterCallback }">
-                                        <MultiSelect v-model="filterModel.value" @change="filterCallback()"
-                                                     :options="utility_companies.map(c=>c.name)"
-                                                     :placeholder="$t('any')" class="p-column-filter"
-                                                     style="min-width: 14rem"
-                                                     :maxSelectedLabels="1"/>
-                                    </template>
-
-                                </Column>
-
-                                <Column field="payment_date" :header="$t('payment_date')" sortable
-                                        :show-clear-button="true"
-                                        :show-filter-menu="false">
-
-                                    <template #filter="{ filterModel, filterCallback }">
-                                        <div class="flex">
-                                            <FloatLabel>
-                                                <Calendar v-model="filterModel.value" dateFormat="yy-mm-dd"
-                                                          @dateSelect="filterCallback()" showButtonBar
-                                                          :input-style="{width:'220px'}" showIcon icon-display="input"/>
-                                                <label>{{ $t('payment_date') }}</label>
-                                            </FloatLabel>
-                                            <Button v-if="false" icon="pi pi-filter-slash" text severity="secondary"
-                                                    @click="filterModel.value = null"/>
-                                        </div>
-
-                                    </template>
-
-                                </Column>
-
-                                <Column field="paid" :header="$t('paid')" sortable>
-
-                                    <template #body="{data}">
-                                        <Checkbox v-model="data.paid" binary disabled/>
-                                    </template>
-
-                                    <template #filter="{ filterModel, filterCallback }">
-                                        <Dropdown v-model="filterModel.value" @change="filterCallback()"
-                                                  :options="[true, false]"
-                                                  :placeholder="$t('any')" class="p-column-filter" style="width: 120px">
-                                            <template #option="{option}">
-                                                {{ option ? $t('paid') : $t('unpaid') }}
-                                            </template>
-                                            <template #value="{value}">
-                                                {{
-                                                    value == true ? $t('paid') : (value === false ? $t('unpaid') : $t('any'))
-                                                }}
-                                            </template>
-                                        </Dropdown>
-                                    </template>
-
-                                </Column>
-
-                                <Column field="amount" :header="$t('amount')" sortable>
-                                    <template #body="{data}">
-                                        {{ data.amount ? formatCurrency(data.amount) : '' }}
-                                    </template>
-                                </Column>
-
-                                <Column :header="`${$t('bill')} PDF`">
-                                    <template #body="{data}">
-                                        <a v-if="data.has_bill_pdf" :href="`/api/bills/pdf/${data.id}/bill/download`"
-                                           class="pdf-link" target="_blank" :title="`${$t('download')} PDF`">
-                                            <img src="/img/pdf-svgrepo-com.svg"/>
-                                        </a>
-                                    </template>
-                                </Column>
-
-                                <Column :header="`${$t('payment_confirmation')} PDF`">
-                                    <template #body="{data}">
-                                        <a v-if="data.has_payment_pdf"
-                                           :href="`/api/bills/pdf/${data.id}/payment_confirmation/download`"
-                                           class="pdf-link"
-                                           target="_blank" :title="`${$t('download')} PDF`">
-                                            <img src="/img/pdf-svgrepo-com.svg"/>
-                                        </a>
-                                    </template>
-                                </Column>
-
-                                <Column :header="$t('actions')">
-                                    <template #body="{data}">
-                                        <Button severity="info" :aria-label="$t('edit')" class="mr-2 mb-2" size="small"
-                                                outlined
-                                                :label="$t('edit')" @click="open_edit_bill(data)"/>
-                                        <Button severity="danger" :aria-label="$t('del')" class=" mb-2" size="small"
-                                                outlined
-                                                :label="$t('del')" @click="confirm_delete_bill($event, data)"/>
-                                    </template>
-                                </Column>
-
-                                <template #empty>{{ $t('no_bills_found') }}</template>
-
-                                <template #loading>
-                                    <div style="background-color: #333; padding: 30px; margin-top: 140px;">
-                                        {{ $t('loading_data') }}
-                                    </div>
                                 </template>
+                            </TabPanel>
 
-                                <template #paginatorstart>
-                                    <em class="hidden lg:block" style="margin: 0 25px;">{{ $t('total_records') }}:
-                                        {{ bills.length }}</em>
-                                </template>
+                        </TabView>
 
-                                <template #paginatorend>
-                                    <div class="mt-2 md:mt-0">
-                                        <Button outlined :aria-label="$t('add_bill')" :label="$t('add_bill')"
-                                                :title="$t('add_bill')"
-                                                @click="open_add_bill()"/>
-                                        <Button outlined class="ml-2" :aria-label="$t('get_zip')" :label="$t('get_zip')"
-                                                :title="$t('get_zip')" @click="get_zip()"/>
-                                    </div>
-                                </template>
-
-                            </DataTable>
-
-                        </TabPanel>
-
-                        <TabPanel>
-                            <template #header>
-
-                                <Inplace :closable="true" @open="editing_hh_name=''" @close="add_household" unstyled
-                                         close-icon="pi pi-check"
-                                         class="tab-add">
-                                    <template #display>
-                                        <Button text icon="pi pi-plus" :title="$t('add_household')"/>
-                                    </template>
-                                    <template #content>
-                                        <InputText v-model="editing_hh_name" :placeholder="$t('household_name')" autofocus class="max-w-24 sm:max-w-none"
-                                                   @keydown.space="$event.stopPropagation()"/>
-                                    </template>
-                                </Inplace>
-                            </template>
-                        </TabPanel>
-
-                    </TabView>
+                    </template>
 
                     <Dialog v-model:visible="edit_bill_dlg_visible" modal :header="edit_bill_dlg_title"
                             content-class="dlg-edit-bill"
@@ -577,7 +629,8 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                                     }}</span>
                             </div>
 
-                            <Button type="button" :label="$t('add_company')" size="small" class=" sm:mt-0 mt-2 float-end sm:float-none"
+                            <Button type="button" :label="$t('add_company')" size="small"
+                                    class=" sm:mt-0 mt-2 float-end sm:float-none"
                                     @click="()=>{adding_company_name=''; dlg_add_company_visible=true}"></Button>
 
                         </div>
@@ -696,12 +749,14 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
 
                     </Dialog>
 
-                    <Dialog v-model:visible="dlg_add_company_visible" modal :header="$t('add_company')" :style="{ width: '25rem' }">
+                    <Dialog v-model:visible="dlg_add_company_visible" modal :header="$t('add_company')"
+                            :style="{ width: '25rem' }">
                         <div class="flex align-items-center gap-3 mt-4 mb-2">
 
                             <div class="w-full md:w-24rem md:mt-0 mb-2">
                                 <FloatLabel>
-                                    <InputText class="w-full" v-model="adding_company_name" input-id="company_name" autofocus/>
+                                    <InputText class="w-full" v-model="adding_company_name" input-id="company_name"
+                                               autofocus/>
                                     <label for="company_name">{{ $t('enter_a_company_name') }}</label>
                                 </FloatLabel>
                             </div>
@@ -709,7 +764,8 @@ const filters: Ref<{ [k: string]: DataTableFilterMetaData | DataTableOperatorFil
                         </div>
 
                         <div class="flex justify-content-end gap-2">
-                            <Button type="button" :label="$t('cancel')" size="small" severity="secondary" @click="dlg_add_company_visible = false"/>
+                            <Button type="button" :label="$t('cancel')" size="small" severity="secondary"
+                                    @click="dlg_add_company_visible = false"/>
                             <Button type="button" :label="$t('save')" size="small" @click="add_company"/>
                         </div>
                     </Dialog>
@@ -797,6 +853,14 @@ h2 {
 }
 
 .hh-tabs {
+
+    @media screen and (min-width: 1200px) {
+        .p-tabview-nav-container {
+            margin-right: 270px;
+        }
+    }
+
+
     .p-tabview-nav li .p-tabview-nav-link {
         border-top-right-radius: 10px;
         border-top-left-radius: 10px;

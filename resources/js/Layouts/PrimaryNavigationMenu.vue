@@ -78,6 +78,7 @@ async function exit_impersonation() {
                         <template #content>
                             <DropdownLink :href="route('profile.edit')"> {{ $t('profile') }}</DropdownLink>
                             <DropdownLink v-if="$page.props.auth.user.is_admin" :href="route('manage_users')"> {{ $t('users') }}</DropdownLink>
+                            <DropdownLink v-if="$page.props.auth.user.is_admin" :href="route('dashboard')"> {{ $t('my_bills') }}</DropdownLink>
                             <DropdownLink v-if="$page.props.auth.is_impersonating" href="javascript:;" @click.prevent="exit_impersonation()"> {{ $t('exit_impersonation') }}</DropdownLink>
                             <DropdownLink :href="route('logout')" method="post" as="button">
                                 {{ $t('log_out') }}

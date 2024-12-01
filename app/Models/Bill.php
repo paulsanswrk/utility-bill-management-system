@@ -60,6 +60,6 @@ class Bill extends Model
                 break;
         }
 
-        return "private/bills/user_{$this->user_id}/household_{$this->household_id}/{$this->bill_date}/{$utility_company->name}/{$doc_name}_{$this->id}.pdf";
+        return "private/bills/household_{$this->household_id}/{$this->bill_date}/{$utility_company->name}/{$doc_name}_{$this->id}.pdf";
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bill;
-use App\Models\Household;
 use App\Models\UtilityCompany;
 use App\Services\UBMS_Security_Service;
 use Illuminate\Http\Request;
@@ -25,29 +24,72 @@ class BillController extends Controller
     /**
      * @return mixed[]
      */
-    private function getBillsOfCurrentUser(int $household_id)
+    private function getBillsOfCurrentUser(int $household_id = 0)
     {
-        $bills = Bill::all()
-            ->where('user_id', '=', Auth::id())
-            ->where('household_id', '=', $household_id)
-            ->whereNotNull('company_id');
+        /*if (!HouseholdController::has_access(Auth::id(), $household_id) || !($household = Household::find($household_id))) {
+            return [];
+        }
 
-        return $bills
-            ->map(function ($bill) {
-                return [
-                    'id' => $bill->id,
-                    'household_id' => $bill->household_id,
-                    'utility_company_id' => $bill->company_id,
-                    'utility_company_name' => $bill->company?->name,
-                    'amount' => $bill->amount,
-                    'paid' => $bill->paid,
-                    'bill_date' => $bill->bill_date,
-                    'payment_date' => $bill->payment_date,
-                    'has_bill_pdf' => !empty($bill->bill_pdf_path),
-                    'has_payment_pdf' => !empty($bill->payment_confirmation_pdf_path),
-                ];
-            })
-            ->sortByDesc('bill_date')->values();
+        $bills = $household->bills()->where('household_id', $household_id)
+            ->whereNotNull('company_id')
+            ->get();*/
+
+
+        /*        $bills = Bill::all()
+                    ->where('user_id', '=', $user_id)
+                    ->where('household_id', '=', $household_id)
+                    ->whereNotNull('company_id');*/
+        $user_id = Auth::id();
+
+        $bills = DB::select("SELECT b.id,
+       b.household_id,
+       b.company_id                                          'utility_company_id',
+       c.name                                                'utility_company_name',
+       b.amount,
+       b.paid,
+       b.bill_date,
+       b.payment_date,
+       if(b.bill_pdf_path is not null, 1, 0)                 has_bill_pdf,
+       if(b.payment_confirmation_pdf_path is not null, 1, 0) has_payment_pdf
+FROM `bills` b
+         INNER JOIN `households` hh ON hh.`id` = b.`household_id`
+         LEFT JOIN `utility_companies` c ON c.`id` = b.`company_id`
+         INNER JOIN `household_user` hu ON hu.`household_id` = hh.`id`
+         INNER JOIN `users` u ON u.`id` = hu.`user_id`
+WHERE u.`id` = $user_id
+and ($household_id = 0 or $household_id = b.household_id)
+order by b.bill_date desc");
+
+        foreach ($bills as &$bill) {
+            $bill->paid = !!$bill->paid;
+        }
+
+        return $bills;
+        /*->map(function ($bill) {
+            return [
+                'id' => $bill->id,
+                'household_id' => $bill->household_id,
+                'utility_company_id' => $bill->company_id,
+                'utility_company_name' => $bill->company?->name,
+                'amount' => $bill->amount,
+                'paid' => $bill->paid,
+                'bill_date' => $bill->bill_date,
+                'payment_date' => $bill->payment_date,
+                'has_bill_pdf' => !empty($bill->bill_pdf_path),
+                'has_payment_pdf' => !empty($bill->payment_confirmation_pdf_path),
+            ];
+        })
+        ->sortByDesc('bill_date')->values();*/
+    }
+
+    public static function check_access_to_bill(int $user_id, int $bill_id): bool
+    {
+        $result = DB::select("select exists(select 1
+                        from bills b
+                        join household_user hu on hu.household_id = b.household_id
+                        where b.id=$bill_id and hu.user_id=$user_id)");
+
+        return !!$result;
     }
 
     /**
@@ -55,20 +97,30 @@ class BillController extends Controller
      */
     public function index(Request $request)
     {
-        $household_id = $request->household_id;
-        if (!$household_id) {
+
+        /*if (!$household_id) {
             $first_household = DB::table('households')
                 ->where('user_id', '=', Auth::id())
                 ->orderBy('name')
                 ->limit(1)
                 ->get()->first();
             $household_id = $first_household?->id ?? 0;
+        }*/
+
+
+        $user_households = \auth()->user()->households()->select('households.id', 'households.name')->orderBy('name')->get();
+
+        if ($user_households->count()) {
+            $household_id = $request->household_id ?? $user_households[0]->id;
+            $hh_bills = $this->getBillsOfCurrentUser($household_id);
+            $hh_companies = $user_households[0]->utility_companies()->select('utility_companies.id', 'utility_companies.name')->orderBy('name')->get();
+        } else {
+            $hh_bills = $hh_companies = [];
         }
-//        return Bill::all();
         return [
-            'user_bills' => $this->getBillsOfCurrentUser($household_id),
-            'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id()),
-            'user_households' => Household::getHouseholdsOfUser(Auth::id()),
+            'user_households' => $user_households,
+            'hh_bills' => $hh_bills,
+            'hh_companies' => $hh_companies,
         ];
     }
 
@@ -78,7 +130,6 @@ class BillController extends Controller
     public function store(Request $request)
     {
         $bill = new Bill();
-        $bill->user_id = Auth::id();
         $bill->household_id = $request->household_id;
         $bill->cipher_key_encrypted = bin2hex($this->ubms_security_service->gen_key_4_bill());
 
@@ -135,7 +186,9 @@ class BillController extends Controller
 
             $household_id = $request->household_id;
 
-            return ['success' => true, 'user_bills' => $this->getBillsOfCurrentUser($household_id), 'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
+            return ['success' => true,
+                'user_bills' => $this->getBillsOfCurrentUser($household_id),
+                'user_companies' => UtilityCompany::getCompaniesForHH($household_id)];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -147,12 +200,15 @@ class BillController extends Controller
      */
     public function destroy(Request $request)
     {
-        $bill = Bill::find($request->id);
-
-        if ($bill->user_id != Auth::id())
-            return ['success' => false, 'message' => 'Bill not found'];
-
+        $bill_id = $request->id;
         $household_id = $request->household_id;
+        $user_id = Auth::id();
+
+        if (!self::check_access_to_bill($user_id, $bill_id)) {
+            return ['success' => false, 'message' => "You don't have permission to delete this bill"];
+        }
+
+        $bill = Bill::find($bill_id);
 
         if (!empty($bill->bill_pdf_path))
             Storage::delete($bill->bill_pdf_path);
@@ -160,9 +216,11 @@ class BillController extends Controller
         if (!empty($bill->payment_confirmation_pdf_path))
             Storage::delete($bill->payment_confirmation_pdf_path);
 
-        Bill::destroy($request->id);
+        Bill::destroy($bill_id);
 
-        return ['success' => true, 'user_bills' => $this->getBillsOfCurrentUser($household_id), 'user_companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
+        return ['success' => true,
+            'user_bills' => $this->getBillsOfCurrentUser($household_id),
+            'companies' => UtilityCompany::getCompaniesForHH($household_id)];
     }
 
     public function delete_pdf(Request $request)

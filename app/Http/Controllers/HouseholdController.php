@@ -22,10 +22,19 @@ class HouseholdController extends Controller
     public function store(Request $request)
     {
         $household = new Household();
-        $household->user_id = \Auth::id();
+        $user_id = \Auth::id();
         $household->name = $request->name;
         try {
             $household->save();
+            $household->users()->attach([
+                $user_id => ['is_creator' => true, 'created_at' => now()],
+            ]);
+
+            /*DB::table('household_user')->insert([
+                'user_id' => $household->user_id,
+                'household_id' => $household->id,
+                'is_creator' => true, // Assuming you want to track the creator in this table
+            ]);*/
             return ['success' => true, 'new_id' => $household->id];
         } catch (\Exception $e) {
             $message = str_contains($e->getMessage(), 'ix_households_name_unique_per_user') ? 'This household already exists!' : 'There was an error while processing your request';
@@ -73,11 +82,19 @@ class HouseholdController extends Controller
             ->delete();
 
         try {
-            DB::table('households')->where('id', '=', $household_id)->where('user_id', '=', \Auth::id())->delete();
+            DB::table('households')->where('id', '=', $household_id)->delete();
             return ['success' => true];
         } catch (\Exception $e) {
             $message = str_contains($e->getMessage(), 'fk_bills_households') ? 'Cannot delete a non-empty household' : 'There was an error while processing your request';
             return ['success' => false, 'message' => $message];
         }
+    }
+
+    public static function has_access($user_id, $household_id)
+    {
+        return DB::table('household_user')
+            ->where('user_id', $user_id)
+            ->where('household_id', $household_id)
+            ->exists();
     }
 }

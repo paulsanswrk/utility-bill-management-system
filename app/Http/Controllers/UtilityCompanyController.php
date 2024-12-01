@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Household;
 use App\Models\UtilityCompany;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,12 +11,12 @@ class UtilityCompanyController extends Controller
 {
 
     /**
-     * Display a listing of the resource.
-     */
-    public function index()
+ * Display a listing of the resource.
+ */
+/*    public function index()
     {
-        return UtilityCompany::getCompaniesOfUser(Auth::id());
-    }
+        return UtilityCompany::getCompaniesForHH(Auth::id());
+    }*/
 
     /**
      * Store a newly created resource in storage.
@@ -23,11 +24,12 @@ class UtilityCompanyController extends Controller
     public function store(Request $request)
     {
         $utilityCompany = new UtilityCompany();
-        $utilityCompany->user_id = \Auth::id();
         $utilityCompany->name = $request->name;
+        $household_id = $request->hh_id;
+        $utilityCompany->household_id = $household_id;
         try {
             $utilityCompany->save();
-            return ['success' => true, 'companies' => UtilityCompany::getCompaniesOfUser(Auth::id())];
+            return ['success' => true, 'companies' => UtilityCompany::getCompaniesForHH($household_id)];
         } catch (\Exception $e) {
             $message = str_contains($e->getMessage(), 'ix_utility_companies_name_unique_per_user')? 'This company already exists!': 'There was an error while processing your request';
             return ['success' => false, 'message' => $message];
