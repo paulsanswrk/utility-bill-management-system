@@ -15,8 +15,7 @@ defineProps<{
     <GuestLayout>
         <Head :title="$t(title || 'Information')" />
 
-        <div class="mb-4 text-sm text-white">
-            {{text}}
+        <div class="mb-4 text-sm text-white" v-html="text">
         </div>
 
     </GuestLayout>

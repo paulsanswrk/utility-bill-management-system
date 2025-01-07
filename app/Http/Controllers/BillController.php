@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bill;
+use App\Models\Household;
 use App\Models\UtilityCompany;
 use App\Services\UBMS_Security_Service;
 use Illuminate\Http\Request;
@@ -95,28 +96,19 @@ order by b.bill_date desc");
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function get_bills(Request $request)
     {
 
-        /*if (!$household_id) {
-            $first_household = DB::table('households')
-                ->where('user_id', '=', Auth::id())
-                ->orderBy('name')
-                ->limit(1)
-                ->get()->first();
-            $household_id = $first_household?->id ?? 0;
-        }*/
-
-
-        $user_households = \auth()->user()->households()->select('households.id', 'households.name')->orderBy('name')->get();
-
-        if ($user_households->count()) {
-            $household_id = $request->household_id ?? $user_households[0]->id;
+        $household_id = $request->household_id ?? 0;
+        $hh_bills = $hh_companies = [];
+        if ($household_id) {
+            $household = Household::find($household_id);
+            $hh_companies = $household->utility_companies()->select('utility_companies.id', 'utility_companies.name')->orderBy('name')->get();
             $hh_bills = $this->getBillsOfCurrentUser($household_id);
-            $hh_companies = $user_households[0]->utility_companies()->select('utility_companies.id', 'utility_companies.name')->orderBy('name')->get();
-        } else {
-            $hh_bills = $hh_companies = [];
         }
+
+        $user_households = Household::get_user_households();
+
         return [
             'user_households' => $user_households,
             'hh_bills' => $hh_bills,

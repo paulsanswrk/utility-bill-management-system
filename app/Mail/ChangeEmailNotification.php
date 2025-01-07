@@ -31,8 +31,9 @@ class ChangeEmailNotification extends Mailable
      */
     public function envelope(): Envelope
     {
+        $locale = $this->user->language ?? 'en';
         return new Envelope(
-            subject: 'Request for Email Address Change',
+            subject: __("messages.request_email_address_change", [], $locale),
         );
     }
 

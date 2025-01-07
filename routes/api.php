@@ -19,7 +19,7 @@ Route::post("/households/store", [HouseholdController::class, 'store'])->middlew
 Route::post("/households/update", [HouseholdController::class, 'update'])->middleware('auth:sanctum');
 Route::post("/households/destroy", [HouseholdController::class, 'destroy'])->middleware('auth:sanctum');
 
-Route::resource("/bills", "App\Http\Controllers\BillController")->middleware('auth:sanctum');
+Route::post("/bills", [BillController::class, 'get_bills'])->middleware('auth:sanctum');
 Route::resource('/bills/store', "App\Http\Controllers\BillController")->middleware('auth:sanctum');
 Route::post('/bills/save', [BillController::class, 'update'])->middleware('auth:sanctum');
 Route::post('/bills/destroy', [BillController::class, 'destroy'])->middleware('auth:sanctum');
@@ -37,4 +37,9 @@ Route::post("/change_pwd", [ManageUsersController::class, 'change_pwd'])->middle
 Route::post("/users/send_pwd_reset_link", [ManageUsersController::class, 'send_pwd_reset_link'])->middleware('auth:sanctum');
 Route::post("/users/impersonate", [ManageUsersController::class, 'impersonate'])->middleware('auth:sanctum');
 Route::post("/users/exit_impersonation", [ManageUsersController::class, 'exit_impersonation'])->middleware('auth:sanctum');
+
+
+Route::post("/households/get_user_households", [HouseholdController::class, 'get_user_households'])->middleware('auth:sanctum');
+Route::post("/households/get_households_mappings", [HouseholdController::class, 'get_households_mappings'])->middleware('auth:sanctum');
+Route::post("/households/update_households_mappings", [HouseholdController::class, 'update_households_mappings'])->middleware('auth:sanctum');
 

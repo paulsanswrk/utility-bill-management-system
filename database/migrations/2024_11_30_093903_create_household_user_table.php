@@ -11,14 +11,16 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('household_user', function (Blueprint $table) {
-            $table->id();
+//            $table->id();
 
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('household_id')->constrained()->onDelete('cascade');
-            $table->boolean('is_creator')->default(false)->nullable(false);
+
+            $table->primary(['user_id', 'household_id']);
+//            $table->boolean('is_creator')->default(false)->nullable(false);
             $table->timestamps();
         });
-        Schema::table('bills', function (Blueprint $table) {
+        /*Schema::table('bills', function (Blueprint $table) {
             $table->dropForeign(['user_id']);
             $table->dropColumn('user_id');
         });
@@ -33,7 +35,7 @@ return new class extends Migration {
 
             $table->foreignId('household_id')->constrained()->onDelete('cascade');
             $table->unique(['household_id', 'name'], 'ix_utility_companies_name_unique_per_hh');
-        });
+        });*/
     }
 
     /**
@@ -42,14 +44,5 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::dropIfExists('household_user');
-
-        Schema::table('bills', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-        });
-        Schema::table('households', function (Blueprint $table) {
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-        });
     }
 };

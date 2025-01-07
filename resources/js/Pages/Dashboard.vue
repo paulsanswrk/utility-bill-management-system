@@ -29,8 +29,8 @@ onMounted(async () => {
     await load_bills();
 });
 
-function formatCurrency(value: number): string {
-    return value.toLocaleString('en-US', {style: 'currency', currency: 'EUR'});
+function formatCurrency(value: string): string {
+    return parseFloat(value).toLocaleString('de-DE', {style: 'currency', currency: 'EUR'});
 }
 
 // region DataTable
@@ -161,7 +161,7 @@ async function load_bills() {
             hh_bills,
             hh_companies,
         }
-    } = await axios.get('/api/bills', {params: {household_id: current_household.value?.id}});
+    } = await axios.post('/api/bills', {household_id: current_household.value?.id});
     bills.value = hh_bills ?? [];
     utility_companies.value = hh_companies ?? [];
     households.value = user_households ?? [];

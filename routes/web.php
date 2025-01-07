@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BillController;
+use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\ManageUsersController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -32,6 +33,10 @@ Route::get('/users', function () {
     return Inertia::render('Users');
 })->middleware(['auth', 'verified'])->name('manage_users');
 
+Route::get('/households', function () {
+    return Inertia::render('HouseholdsAccess');
+})->middleware(['auth', 'verified'])->name('households_access');
+
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -45,6 +50,9 @@ Route::get('/clear-cache', function () {
 });
 
 Route::get('/confirmemailchange/{uuid}', [ManageUsersController::class, 'change_email_confirmation']);
+
+Route::get('/households/accept/{uuid}', [HouseholdController::class, 'accept']);
+Route::get('/households/decline/{uuid}', [HouseholdController::class, 'decline']);
 
 
 require __DIR__ . '/auth.php';

@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised();
         });
 
-        \App::setLocale('hr');
+//        \App::setLocale('hr');
 
         Validator::extend(
             'recaptcha',

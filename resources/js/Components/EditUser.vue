@@ -1,34 +1,33 @@
 <template>
-    <Dialog header="Edit User" v-model:visible="visible" modal @hide="onHide" :style="{ width: '500px', maxWidth: '90vw' }">
-
+    <Dialog :header="$t('edit_user.header')" v-model:visible="visible" modal @hide="onHide" :style="{ width: '500px', maxWidth: '90vw' }">
 
         <Message v-if="!!_message" severity="error" :sticky="true" :life="4000">{{ _message }}</Message>
 
         <form class="p-fluid" @submit.prevent="saveUser">
             <div class="p-field">
-                <label for="name">Name</label>
+                <label for="name">{{ $t('edit_user.name') }}</label>
                 <InputText id="name" v-model="userData.name" required/>
             </div>
             <div class="p-field">
-                <label for="email">Email</label>
+                <label for="email">{{ $t('edit_user.email') }}</label>
                 <input type="email" id="email" v-model="userData.email" required
                        class="p-inputtext p-component p-filled"/>
 
                 <div v-if="userData.email_change_request" class="text-sm mt-2">
-                    Waiting for confirmation from the user. New email: {{ userData.email_change_request.new_email }}
+                    {{ $t('edit_user.email_change_request') }}: {{ userData.email_change_request.new_email }}
                 </div>
-
             </div>
 
             <div class="p-field">
-                <label for="is_admin">Is Admin</label>&nbsp;
+                <label for="is_admin">{{ $t('edit_user.is_admin') }}</label>&nbsp;
                 <Checkbox id="is_admin" v-model="userData.is_admin" :binary="true"/>
             </div>
             <div class="p-field">
-                <Button type="submit" label="Save"/>
+                <Button type="submit" :label="$t('edit_user.save')"/>
             </div>
         </form>
     </Dialog>
+
 </template>
 
 

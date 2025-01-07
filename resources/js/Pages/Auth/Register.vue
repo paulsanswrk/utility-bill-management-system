@@ -8,9 +8,13 @@ import {Head, Link, useForm} from '@inertiajs/vue3';
 import axios from "axios";
 import {useReCaptcha} from "vue-recaptcha-v3";
 
+const props = defineProps<{
+    email: string;
+}>();
+
 const form = useForm({
     name: '',
-    email: '',
+    email: props.email,
     password: '',
     password_confirmation: '',
     captcha_token: '',

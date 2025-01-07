@@ -1,5 +1,5 @@
 <template>
-    <Dialog v-model:visible="dialogVisible" :header="`Change Password for ${_user_name}`" :modal="true"
+    <Dialog v-model:visible="dialogVisible" :header="`${$t('change_password.header')} ${_user_name}`" :modal="true"
             class="change-pwd-dialog w-30rem max-w-full" @hide="dialogVisible = false">
 
         <Message v-if="errorMessages.length" severity="error" :sticky="true" :life="4000" @close="errorMessages=[]"
@@ -13,23 +13,22 @@
 
         <form @submit.prevent="validateForm">
             <div class="field flex justify-content-between align-items-center w-full">
-                <label for="password">New Password</label>
+                <label for="password">{{ $t('change_password.new_password') }}</label>
                 &nbsp;
                 <InputText type="password" id="password" v-model="password" name="password" required autofocus
                            autocomplete="new-password"/>
             </div>
 
             <div class="field flex justify-content-between align-items-center w-full">
-                <label for="confirmPassword" class="mr-2">Confirm Password</label>
+                <label for="confirmPassword" class="mr-2">{{ $t('change_password.confirm_password') }}</label>
                 &nbsp;
                 <InputText type="password" id="confirmPassword" v-model="confirmPassword" name="confirm_password"
                            autocomplete="new-password" required/>
             </div>
 
             <div class="field text-right">
-                <Button type="submit" label="Submit"/>
+                <Button type="submit" :label="$t('change_password.submit')"/>
             </div>
-
         </form>
     </Dialog>
 
@@ -39,6 +38,9 @@
 import {Ref, ref} from 'vue';
 import axios from "axios";
 import {useToast} from "primevue/usetoast";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n();
 
 const toast = useToast();
 
@@ -62,28 +64,27 @@ const errorMessages: Ref<string[]> = ref([]);
 
 async function validateForm() {
     if (password.value === '' || confirmPassword.value === '') {
-        errorMessages.value.push('Both fields are required.');
+        errorMessages.value.push(t('change_password.errors.required_fields'));
     } else if (password.value !== confirmPassword.value) {
-        errorMessages.value.push('Passwords must match.');
+        errorMessages.value.push(t('change_password.errors.passwords_mismatch'));
     } else {
         errorMessages.value = [];
 
-        const {data: {success, message, errors}} = await axios.post('/api/change_pwd', {
+        const { data: { success, message, errors } } = await axios.post('/api/change_pwd', {
             user_id: _user_id.value,
             password: password.value,
             password_confirmation: confirmPassword.value,
-        }, {validateStatus: () => true});
+        }, { validateStatus: () => true });
 
         if (success) {
             errorMessages.value = [];
             dialogVisible.value = false;
-            toast.add({ severity: 'success', summary: 'Success', detail: 'Password set', life: 3000 });
+            toast.add({ severity: 'success', summary: t('change_password.success.title'), detail: t('change_password.success.message'), life: 3000 });
         } else {
             errorMessages.value = errors ? Object.values(errors).flat() : [message];
         }
     }
-}
-</script>
+}</script>
 
 <style lang="scss">
 

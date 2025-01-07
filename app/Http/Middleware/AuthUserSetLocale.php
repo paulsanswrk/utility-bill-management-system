@@ -16,7 +16,7 @@ class AuthUserSetLocale
     public function handle(Request $request, Closure $next): Response
     {
         if (\Auth::check()) {
-            \App::setLocale(\Auth::user()->language ?? 'en');
+            \App::setLocale(\Auth::user()->language ?? 'hr');
         }
         elseif ($request->cookie('user_lang')) {
             \App::setLocale($request->cookie('user_lang'));

@@ -2,15 +2,14 @@
 
 namespace App\Mail;
 
-use App\Models\User;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class BillNotification extends Mailable
+require_once __DIR__ . '/Ubms_Mailable.php';
+
+class BillNotification extends UBMS_Mailable
 {
     use Queueable, SerializesModels;
 
@@ -41,13 +40,7 @@ class BillNotification extends Mailable
      */
     public function content(): Content
     {
-
-        $website_url = config('app.url');
-        $login_link = $website_url . '/login';
         $locale = $this->user->language ?? 'en';
-
-        $app_name = config('app.name');
-        $app_name_hr = env('ubms_app_name_hr');
 
         return new Content(
             view: "emails/$locale/bill_notification",
@@ -55,9 +48,9 @@ class BillNotification extends Mailable
                 'user' => $this->user,
                 'bills' => $this->bills,
                 'locale' => $locale,
-                'website_url' => $website_url,
-                'login_link' => $login_link,
-                'company_name' => $locale == 'en'? $app_name : $app_name_hr,
+                'website_url' => $this->website_url,
+                'login_link' => $this->login_link,
+                'company_name' => $this->get_company_name($locale),
                 'customer_service_contact' => '',
             ]
         );

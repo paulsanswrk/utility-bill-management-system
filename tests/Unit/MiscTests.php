@@ -6,3 +6,5 @@ test('format date month', function () {
     $formatted = \Carbon\Carbon::createFromFormat('Y-m', $issue_date)->locale($locale)->translatedFormat('F Y');
     expect(true)->toBeTrue();
 });
+
+

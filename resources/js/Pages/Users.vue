@@ -1,12 +1,12 @@
 <template>
 
-    <Head :title="$t('users')"/>
+    <Head :title="$t('users_')"/>
 
     <AuthenticatedLayout>
 
         <template #header>
             <h2 class="text-white text-2xl">
-                {{ $t('users') }}
+                {{ $t('users_') }}
             </h2>
         </template>
 
@@ -21,34 +21,35 @@
                     </Message>
 
                     <DataTable v-else :value="_users"
-                               :paginator="true" :rows="10" :total-records="_totalUsers"
+                               :paginator="true" :total-records="_totalUsers"
                                :rowsPerPageOptions="[10, 20, 50, 100, 200, 500, 1000]"
                                v-model:rows="rows"
                                :lazy="true" @page="onPage"
                                @sort="onSort($event)"
                                paginator-position="both"
                     >
-                        <Column field="name" header="Name" sortable></Column>
-                        <Column field="email" header="Email" sortable></Column>
-                        <Column field="is_admin" header="Is Admin" sortable>
+                        <Column field="name" :header="$t('users.name')" sortable></Column>
+                        <Column field="email" :header="$t('users.email')" sortable></Column>
+                        <Column field="is_admin" :header="$t('users.is_admin')" sortable>
                             <template #body="{data}">
                                 <input type="checkbox" :checked="data.is_admin" disabled/>
                             </template>
                         </Column>
-                        <Column header="Actions">
+                        <Column :header="$t('users.actions')">
                             <template #body="{data}">
-                                <Button label="Edit" size="small" @click="edit_user!.open(data)"
+                                <Button :label="$t('users.edit')" size="small" @click="edit_user!.open(data)"
                                         class="p-button-outlined p-button-primary"/>
-                                <Button label="Change Password" size="small"
+                                <Button :label="$t('users.change_password')" size="small"
                                         @click="change_pwd!.open(data.id, data.name)"
                                         class="p-button-outlined p-button-warning ml-2"/>
-                                <Button label="Reset Password" size="small" @click="resetPassword($event, data)"
+                                <Button :label="$t('users.reset_password')" size="small" @click="resetPassword($event, data)"
                                         class="p-button-outlined p-button-danger ml-2"/>
-                                <Button label="Impersonate" size="small" @click="impersonate(data.id)"
+                                <Button :label="$t('users.impersonate')" size="small" @click="impersonate(data.id)"
                                         class="p-button-outlined p-button-success ml-2"/>
                             </template>
                         </Column>
                     </DataTable>
+
 
                 </div>
             </div>
@@ -148,12 +149,12 @@ async function onSort(event: any) {
 async function resetPassword(event: any, user: any) {
     confirm.require({
         target: event.currentTarget,
-        message: 'An email with  a password reset link will be sent to user',
+        message: t('an_email_with_a_password_reset_link_will_be_sent_to_user'),
         icon: 'pi pi-exclamation-triangle',
         rejectClass: 'p-button-secondary p-button-outlined p-button-sm',
         acceptClass: 'p-button-sm',
-        rejectLabel: 'Cancel',
-        acceptLabel: 'Continue',
+        rejectLabel: t('cancel'),
+        acceptLabel: t('continue_'),
         accept: async () => {
             const {data: {success, message,}} = await axios.post('/api/users/send_pwd_reset_link', {email: user.email});
             if (success)

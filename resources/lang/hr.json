@@ -7,5 +7,8 @@
     "passwords.sent": "Poslali smo vam email s poveznicom za resetiranje lozinke.",
     "passwords.throttled": "Molimo pričekajte prije ponovnog pokušaja.",
     "passwords.token": "Ovaj token za resetiranje lozinke je nevažeći.",
-    "passwords.user": "Ne možemo pronaći korisnika s tom email adresom."
+    "passwords.user": "Ne možemo pronaći korisnika s tom email adresom.",
+
+    "messages.request_email_address_change": "Zahtjev za promjenu e-mail adrese"
+
 }

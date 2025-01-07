@@ -74,6 +74,7 @@
     "save": "Save",
     "saved": "Saved",
     "cancel": "Cancel",
+    "continue_": "Continue",
     "yes": "Yes",
     "success": "Success",
     "error": "Error",
@@ -116,10 +117,75 @@
     "notifications": "Notifications",
     "setup_notifications": "Setup notifications for unpaid bills",
 
-    "users": "Users",
+    "users_": "Users",
+    "users": {
+        "name": "Name",
+        "email": "Email",
+        "is_admin": "Is Admin",
+        "actions": "Actions",
+        "edit": "Edit",
+        "change_password": "Change Password",
+        "reset_password": "Reset Password",
+        "impersonate": "Impersonate"
+    },
     "exit_impersonation": "Exit Impersonation",
+    "an_email_with_a_password_reset_link_will_be_sent_to_user": "An email with a password reset link will be sent to user",
+
+    "households_access": "Households Access",
 
 
+    "change_password": {
+        "header": "Change Password for",
+        "new_password": "New Password",
+        "confirm_password": "Confirm Password",
+        "submit": "Submit",
+        "success": {
+            "title": "Success",
+            "message": "Password set"
+        },
+        "errors": {
+            "required_fields": "Both fields are required.",
+            "passwords_mismatch": "Passwords must match."
+        }
+    },
+
+    "edit_user": {
+        "header": "Edit User",
+        "name": "Name",
+        "email": "Email",
+        "email_change_request": "Waiting for confirmation from the user. New email",
+        "is_admin": "Is Admin",
+        "save": "Save"
+    },
+
+    "hh_access": {
+        "user": "User",
+        "allow_access_to_households": "Allow Access to Households",
+        "actions": "Actions",
+        "invitation_sent": "Invitation sent on",
+        "error_sending_invitation": "Error sending invitation",
+        "invitation_declined": "Invitation has been declined",
+
+        "success": "Success",
+        "changes_saved_successfully": "Changes saved successfully",
+        "an_error_occurred": "An error occurred",
+        "failed_to_save_changes": "Failed to save changes",
+
+
+        "delete": "Delete",
+        "change": "Change",
+        "no_household_access": "No household access is set up"
+    },
+
+    "add_user_access": {
+        "add_access_for_user": "Add Access for User",
+        "header": "Add User Access",
+        "user_email": "User Email",
+        "households": "Households",
+        "cancel": "Cancel",
+        "save_changes": "Save Changes",
+        "save": "Save"
+    },
 
     "my_bills": "My Bills"
 }

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\Household;
 use App\Models\User;
-use App\Rules\Recaptcha;
 use App\Services\UBMS_Security_Service;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -13,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,7 +32,9 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'email' => session('email'),
+        ]);
     }
 
     /**
@@ -44,12 +46,12 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'email' => 'required|string|lowercase|email|max:255|unique:' . User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
 //            'captcha_token'  => [new Recaptcha],
         ]);
 
-        $lang = $request->cookie('user_lang')  ?? 'en';
+        $lang = $request->cookie('user_lang') ?? 'en';
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -58,10 +60,29 @@ class RegisteredUserController extends Controller
         ]);
 
         $lang = $request->cookie('user_lang');
-        Household::create([
-            'name' => trans('Default Household', [], $lang),
-            'user_id' => $user->id,
-        ]);
+
+
+        $pending_invitations = DB::table('household_invitations')
+            ->where('invitee_email', $request->email)
+            ->where('invitation_status', 'accepted')
+            ->pluck('household_ids')
+            ->toArray();
+
+        if (empty($pending_invitations)) {
+            $household = Household::create([
+                'name' => trans('Default Household', [], $lang),
+            ]);
+
+            Household::add_user_households($user->id, (string)$household->id);
+        } else {
+            Household::add_user_households($user->id, implode(',', $pending_invitations));
+
+            DB::table('household_invitations')
+                ->where('invitee_email', $request->email)
+                ->where('invitation_status', 'accepted')
+                ->delete();
+        }
+
 
         event(new Registered($user));
 
