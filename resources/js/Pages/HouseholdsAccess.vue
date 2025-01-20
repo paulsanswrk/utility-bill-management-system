@@ -30,6 +30,7 @@ interface AccessMappings {
 
 
 interface Invitation {
+    id: number | null;
     invitee_id: number | null;
     invitee: { name: string } | null;
     invitee_email: string;
@@ -70,6 +71,7 @@ async function load_households() {
 
 function format_invitation_data(invitations: Invitation[]): (AccessMappings)[] {
     return invitations.map((i: Invitation) => ({
+        id: i.id,
         email: i.invitee_email,
         hh_ids: i.household_ids,
         name: i.invitee?.name ?? '',
@@ -104,9 +106,32 @@ async function delete_mapping(mapping: AccessMappings) {
     if (index !== -1) {
         _mappings_and_invitations.value.splice(index, 1);
     }
+
+    await save_mappings();
 }
 
-function mapping_edit_finished() {
+async function delete_invitation(invitation: Invitation) {
+
+    const {
+        data: {
+            success,
+            mappings,
+            invitations,
+        }
+    } = await axios.post(`/api/households/delete_invitation/${invitation.id}`);
+
+    if (success) {
+        _mappings_and_invitations.value = mappings.concat(format_invitation_data(invitations));
+        toast.add({
+            severity: 'info',
+            summary: t('hh_access.success'),
+            detail: t('hh_access.changes_saved_successfully'),
+            life: 3000
+        });
+    }
+}
+
+async function mapping_edit_finished() {
     if (_households.length == 1)
         editing_hh_ids.value = [_households[0].id];
 
@@ -120,6 +145,8 @@ function mapping_edit_finished() {
     editing_user_email.value = "";
     editing_hh_ids.value = [];
     is_add_user_dlg_visible.value = false;
+
+    await save_mappings();
 }
 
 async function save_mappings() {
@@ -132,7 +159,12 @@ async function save_mappings() {
     } = await axios.post("/api/households/update_households_mappings", {mappings: _mappings_and_invitations.value});
     if (success) {
         _mappings_and_invitations.value = mappings.concat(format_invitation_data(invitations));
-        toast.add({severity: 'info', summary: t('hh_access.success'), detail: t('hh_access.changes_saved_successfully'), life: 3000});
+        toast.add({
+            severity: 'info',
+            summary: t('hh_access.success'),
+            detail: t('hh_access.changes_saved_successfully'),
+            life: 3000
+        });
     } else {
         toast.add({
             severity: 'error',
@@ -141,7 +173,15 @@ async function save_mappings() {
             life: 3000
         });
     }
+}
 
+function fill_form_for_matching_user(editing_user_email: string) {
+    const matching_mapping = _mappings_and_invitations.value.find((m: any) => m.type == null && m.email == editing_user_email) as AccessMappings;
+    if (matching_mapping) {
+        editing_hh_ids.value = matching_mapping.hh_ids.split(',').filter(s => !!s).map(x => parseInt(x));
+    } else {
+        editing_hh_ids.value = [];
+    }
 }
 
 </script>
@@ -191,14 +231,21 @@ async function save_mappings() {
                                 <template #body="{ data }">
 
                                     <template v-if="data.type == 'invitation'">
-                                        <template v-if="data.invitation_status == 'sent'">
-                                            {{ $t('hh_access.invitation_sent') }} {{ data.created_at }}
-                                        </template>
-                                        <template v-else-if="data.invitation_status == 'error'">
-                                            {{ $t('hh_access.error_sending_invitation') }}
-                                        </template>
-                                        <template v-else-if="data.invitation_status == 'declined'">
-                                            {{ $t('hh_access.invitation_declined') }}
+
+                                        <Button :label="$t('hh_access.delete')" icon="pi pi-trash"
+                                                class="p-button-text p-button-sm p-button-danger"
+                                                @click="delete_invitation(data)"/>
+
+                                        <template v-if="false">
+                                            <template v-if="data.invitation_status == 'sent'">
+                                                {{ $t('hh_access.invitation_sent') }} {{ data.created_at }}
+                                            </template>
+                                            <template v-else-if="data.invitation_status == 'error'">
+                                                {{ $t('hh_access.error_sending_invitation') }}
+                                            </template>
+                                            <template v-else-if="data.invitation_status == 'declined'">
+                                                {{ $t('hh_access.invitation_declined') }}
+                                            </template>
                                         </template>
                                     </template>
 
@@ -220,7 +267,7 @@ async function save_mappings() {
                         </DataTable>
 
 
-                        <div class="mt-5">
+                        <div v-if="false" class="mt-5">
                             <Button @click="save_mappings()">{{ $t('add_user_access.save_changes') }}</Button>
                         </div>
 
@@ -236,7 +283,9 @@ async function save_mappings() {
             <form @submit.prevent="mapping_edit_finished" class="p-fluid">
                 <div class="field">
                     <label for="email">{{ $t('add_user_access.user_email') }}</label>
-                    <input id="email" v-model="editing_user_email" type="email" required autofocus autocomplete="email"
+                    <input id="email" v-model.trim="editing_user_email" type="email"
+                           @input="fill_form_for_matching_user(editing_user_email)"
+                           required autofocus autocomplete="email"
                            class="p-inputtext p-component p-filled text-white"/>
                 </div>
 

@@ -88,6 +88,13 @@
     "household_successfully_deleted": "Household successfully deleted",
     "household_successfully_renamed": "Household successfully renamed",
 
+    "you_have_some_pending_invitations" : "You have some pending invitations.",
+    "from" : "From",
+    "household" : "Household",
+    "households" : "Households",
+    "accept" : "Accept",
+    "decline" : "Decline",
+
     "profile": "Profile",
     "profile_information": "Profile Information",
     "update_your_accounts_profile_information_and_email_address": "Update your account's profile information and email address.",
@@ -160,7 +167,7 @@
 
     "hh_access": {
         "user": "User",
-        "allow_access_to_households": "Allow Access to Households",
+        "allow_access_to_households": "Access to Households",
         "actions": "Actions",
         "invitation_sent": "Invitation sent on",
         "error_sending_invitation": "Error sending invitation",
@@ -174,7 +181,9 @@
 
         "delete": "Delete",
         "change": "Change",
-        "no_household_access": "No household access is set up"
+        "no_household_access": "No household access is set up",
+
+        "invitation_accepted": "Invitation accepted"
     },
 
     "add_user_access": {

@@ -42,4 +42,7 @@ Route::post("/users/exit_impersonation", [ManageUsersController::class, 'exit_im
 Route::post("/households/get_user_households", [HouseholdController::class, 'get_user_households'])->middleware('auth:sanctum');
 Route::post("/households/get_households_mappings", [HouseholdController::class, 'get_households_mappings'])->middleware('auth:sanctum');
 Route::post("/households/update_households_mappings", [HouseholdController::class, 'update_households_mappings'])->middleware('auth:sanctum');
+Route::post('/households/accept/{id}', [HouseholdController::class, 'accept_ajax']);
+Route::post('/households/decline/{id}', [HouseholdController::class, 'decline_ajax']);
+Route::post('/households/delete_invitation/{id}', [HouseholdController::class, 'delete_invitation']);
 

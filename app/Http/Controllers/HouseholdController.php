@@ -69,7 +69,7 @@ class HouseholdController extends Controller
     public function update(Request $request, Household $household)
     {
         $household = Household::find($request->id);
-        if (empty($household) || $household->user_id != \Auth::id()) {
+        if (empty($household) || !HouseholdController::has_access(\Auth::id(), $household->id)) {
             return ['success' => false, 'message' => 'Household not found'];
         }
 
@@ -141,14 +141,46 @@ where u.id in
                      on user_hhs.household_id = hu.household_id)
   and u.id != $user_id");
 
-        return ['mappings' => $mappings, 'invitations' => $this->get_invitations($user_id)];
+        return ['mappings' => $mappings, 'invitations' => $this->get_invitations_for_inviter($user_id)];
     }
 
-    public function get_invitations($user_id = null)
+    public function get_invitations_for_inviter($user_id = null)
     {
         $user_id ??= \Auth::id();
 
         return HouseholdInvitation::where('invited_by', $user_id)->with(['invitee:id,name'])->get();
+    }
+
+    public function get_invitations_for_invitee($user_id = null)
+    {
+        $user_id ??= \Auth::id();
+
+        $invitations = HouseholdInvitation::where('invitee_id', $user_id)
+            ->with(['inviter:id,name,email'])
+            ->select(['id', 'household_ids', 'invited_by',]) //invited_by brings up inviter:id,name,email fields too
+            ->get();
+
+        //[{"id":6,"uuid":"ae2e3611-e4ce-4c8c-a4f2-cd6d10d7a2ff","household_ids":"20","invited_by":108,"inviter":{"id":108,"name":"Eve Vega","email":"gusy@mailinator.com"}}]
+
+
+        if ($invitations->isEmpty()) {
+            return [];
+        }
+
+        $concatenated_household_ids = collect($invitations)->pluck('household_ids')->implode(',');
+
+        $hhs = DB::select("select h.id, h.name from households h where h.id in ($concatenated_household_ids)");
+
+        foreach ($invitations as $invitation) {
+            $household_ids = explode(',', $invitation->household_ids ?? '');
+            $household_names = collect($hhs)->filter(function ($hh) use ($household_ids) {
+                return in_array($hh->id, $household_ids);
+            })->pluck('name')->toArray();
+
+            $invitation->hh_names = $household_names;
+        }
+
+        return $invitations;
     }
 
     public function update_households_mappings()
@@ -165,6 +197,7 @@ where u.id in
 
         foreach ($new_mappings_by_email as $invitee_email => $new_mapping) {
             $new_hh_ids = $this->ubms_helper->strToSortedIntArray($new_mapping['hh_ids']);
+            $invitee = DB::table('users')->where('email', $invitee_email)->first();
 
             if ($saved_mapping = $saved_mappings_by_email[$invitee_email] ?? null) {
                 unset($saved_mappings_by_email[$invitee_email]); //so mark as processed
@@ -174,14 +207,16 @@ where u.id in
                 $saved_hh_ids = $this->ubms_helper->strToSortedIntArray($saved_mapping->hh_ids);
                 $changes = $this->ubms_helper->detectChanges($saved_hh_ids, $new_hh_ids);
 
-                foreach ($changes['added'] as $new_hh_id)
-                    //TODO: send emails for newly assigned households?
-                    DB::table('household_user')->insert([
-                        'user_id' => $saved_mapping->user_id,
-                        'household_id' => $new_hh_id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                $this->invite(\Auth::id(), $invitee_email, $invitee?->id ?? null, $changes['added']);
+
+                /*              foreach ($changes['added'] as $new_hh_id)
+                                  //TODO: send emails for newly assigned households?
+                                  DB::table('household_user')->insert([
+                                      'user_id' => $saved_mapping->user_id,
+                                      'household_id' => $new_hh_id,
+                                      'created_at' => now(),
+                                      'updated_at' => now(),
+                                  ]);*/
 
                 foreach ($changes['removed'] as $new_hh_id)
                     DB::table('household_user')
@@ -191,22 +226,7 @@ where u.id in
 
             } else {
                 //add
-                $user = DB::table('users')->where('email', $invitee_email)->first();
-                if ($user)
-                    //existing user
-                    $this->invite(\Auth::id(), $invitee_email, $user->id, $new_hh_ids);
-                /*foreach ($new_hh_ids as $new_hh_id)
-                    DB::table('household_user')->insert([
-                        'user_id' => $user->id,
-                        'household_id' => $new_hh_id,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);*/
-
-                else
-                    //user to be invited
-                    $this->invite(\Auth::id(), $invitee_email, null, $new_hh_ids);
-
+                $this->invite(\Auth::id(), $invitee_email, $invitee?->id ?? null, $new_hh_ids);
             }
         }
 
@@ -222,16 +242,26 @@ where u.id in
 
         return ['success' => true,
             'mappings' => $this->get_households_mappings()['mappings'],
-            'invitations' => $this->get_invitations()];
+            'invitations' => $this->get_invitations_for_inviter()];
 
     }
 
     private function invite(int $invited_by, string $invitee_email, int|null $invitee_id, array $hh_ids)
     {
+        if (empty($hh_ids)) return;
+
+        $hh_ids = collect($hh_ids)->sort()->values()->toArray();
+        $hh_ids_str = implode(',', $hh_ids);
+
         //remove previously sent invitations if any
-        HouseholdInvitation::where('invited_by', $invited_by)
-            ->where('invitee_email', $invitee_email)
-            ->delete();
+        DB::statement("DELETE FROM household_invitations
+            WHERE invited_by = ?
+            AND invitee_email = ?
+            AND ? like CONCAT('%', household_ids, '%')", [
+            $invited_by,
+            $invitee_email,
+            $hh_ids_str
+        ]);
 
         $uuid = \Str::uuid();
         $hh_invitation = HouseholdInvitation::create([
@@ -286,7 +316,6 @@ where u.id in
 
     public function accept($uuid)
     {
-
         $invitation = HouseholdInvitation::where('uuid', $uuid)->with(['invitee:id,name'])->first();
 
         if (!$invitation) {
@@ -316,7 +345,6 @@ where u.id in
                 'error' => 'The invitee is not a registered user.',
                 'email' => $invitation->invitee_email,
             ]);
-
         }
 
         //the invitee is an existing user
@@ -362,15 +390,55 @@ where u.id in
             ]);
         }
 
+        $invitation->delete();
+
         // Update the invitation_status to 'declined'
-        $invitation->update([
+        /*$invitation->update([
             'invitation_status' => 'declined',
-        ]);
+        ]);*/
 
         return Inertia::render('Information', [
             'title' => 'Success',
             'status' => 'success',
             'text' => 'Invitation has been declined.',
         ]);
+    }
+
+    public function accept_ajax($id)
+    {
+        $invitation = HouseholdInvitation::where('id', $id)->with(['invitee:id,name'])->first();
+        if (!$invitation) {
+            return ['success' => false, 'message' => 'Invitation not found'];
+        }
+
+        Household::add_user_households(auth()->id(), $invitation->household_ids);
+
+        $invitation->delete();
+
+        return ['success' => true, 'invitations' => $this->get_invitations_for_invitee(), 'user_households' => Household::get_user_households(),];
+    }
+
+    public function decline_ajax($id)
+    {
+        $invitation = HouseholdInvitation::where('id', $id)->with(['invitee:id,name'])->first();
+        if (!$invitation) {
+            return ['success' => false, 'message' => 'Invitation not found'];
+        }
+
+        $invitation->delete();
+
+        return ['success' => true, 'invitations' => $this->get_invitations_for_invitee(),];
+    }
+
+    public function delete_invitation($id)
+    {
+
+        $invitation = HouseholdInvitation::find($id);
+
+        $invitation->delete();
+
+        return ['success' => true,
+            'mappings' => $this->get_households_mappings()['mappings'],
+            'invitations' => $this->get_invitations_for_inviter()];
     }
 }

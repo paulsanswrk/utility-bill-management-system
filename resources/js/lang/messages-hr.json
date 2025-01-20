@@ -87,6 +87,13 @@
     "household_successfully_deleted": "Kućanstvo uspješno izbrisano",
     "household_successfully_renamed": "Kućanstvo uspješno preimenovano",
 
+    "you_have_some_pending_invitations": "Imate neke neriješene pozivnice.",
+    "from": "Od",
+    "household": "Kućanstvo",
+    "households": "Kućanstva",
+    "accept": "Prihvati",
+    "decline": "Odbij",
+
     "profile": "Profil",
     "profile_information": "Informacije o Profilu",
     "update_your_accounts_profile_information_and_email_address": "Ažurirajte informacije o profilu i email adresi vašeg računa.",
@@ -156,7 +163,7 @@
 
     "hh_access": {
         "user": "Korisnik",
-        "allow_access_to_households": "Omogući pristup kućanstvima",
+        "allow_access_to_households": "Pristup Kućanstvima",
         "actions": "Akcije",
         "invitation_sent": "Pozivnica poslana dana",
         "error_sending_invitation": "Greška pri slanju pozivnice",
@@ -169,7 +176,9 @@
 
         "delete": "Obriši",
         "change": "Promijeni",
-        "no_household_access": "Pristup kućanstvima nije postavljen"
+        "no_household_access": "Pristup kućanstvima nije postavljen",
+        "invitation_accepted": "Pozivnica prihvaćena"
+
     },
 
     "add_user_access": {

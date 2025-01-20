@@ -20,6 +20,7 @@ import {FilterMatchMode, FilterService} from "primevue/api";
 import {DataTableFilterEvent, DataTableFilterMetaData, DataTableOperatorFilterMetaData} from "primevue/datatable";
 import {useI18n} from 'vue-i18n'
 import {HouseHold} from "@/Data/HouseHold";
+import {Invitation} from "@/Data/Invitation";
 
 const {t} = useI18n();
 const confirm = useConfirm();
@@ -76,6 +77,7 @@ const household_editor_active = ref(false);
 const editing_hh_id = ref(0);
 const editing_hh_name = ref('');
 const hh_active_tab_index = ref(0);
+const pending_invitations: Ref<Invitation[]> = ref([]);
 
 async function hh_tab_changed(index: number) {
     current_household.value = households.value[index];
@@ -106,8 +108,19 @@ async function add_household() {
 async function rename_household(h: HouseHold) {
     if (editing_hh_name.value.trim() == h.name.trim()) return; //nothing edited
 
-    await axios.post('/api/households/update', {id: editing_hh_id.value, name: h.name})
-    toast.add({severity: 'success', summary: t('success'), detail: t('household_successfully_renamed'), life: 3000});
+    const {data: {success, message,}} = await axios.post('/api/households/update', {
+        id: editing_hh_id.value,
+        name: h.name
+    })
+    if (success) {
+        toast.add({
+            severity: 'success',
+            summary: t('success'),
+            detail: t('household_successfully_renamed'),
+            life: 3000
+        });
+    } else
+        toast.add({severity: 'error', summary: t('error'), detail: message, life: 10000});
 }
 
 async function remove_household(id: number) {
@@ -160,12 +173,14 @@ async function load_bills() {
             user_households,
             hh_bills,
             hh_companies,
+            invitations,
         }
     } = await axios.post('/api/bills', {household_id: current_household.value?.id});
     bills.value = hh_bills ?? [];
     utility_companies.value = hh_companies ?? [];
     households.value = user_households ?? [];
     current_household.value = households.value[hh_active_tab_index.value] ?? households.value[0];
+    pending_invitations.value = invitations ?? [];
 
     waiting.value = false;
 }
@@ -367,6 +382,29 @@ async function on_filter(e: DataTableFilterEvent) {
 
 // endregion
 
+// region Invitations
+
+async function accept_invitation(id: number) {
+    const {data: {success, invitations, user_households, message}} = await axios.post(`/api/households/accept/${id}`);
+
+    if (success) {
+        toast.add({severity: 'success', summary: t('success'), detail: t('hh_access.invitation_accepted'), life: 3000});
+        pending_invitations.value = invitations;
+        households.value = user_households;
+    } else
+        toast.add({severity: 'error', summary: t('error'), detail: message, life: 10000});
+}
+
+async function decline_invitation(id: number) {
+    const {data: {success, invitations, message}} = await axios.post(`/api/households/decline/${id}`);
+    if (success) {
+        toast.add({severity: 'success', summary: t('success'), detail: t('hh_access.invitation_declined'), life: 3000});
+        pending_invitations.value = invitations;
+    } else
+        toast.add({severity: 'error', summary: t('error'), detail: message, life: 10000});
+}
+// endregion
+
 
 </script>
 
@@ -375,7 +413,7 @@ async function on_filter(e: DataTableFilterEvent) {
 
     <AuthenticatedLayout>
         <template v-if="false" #header>
-            <h2 class="text-white ">
+            <h2 class="text-white">
                 {{ $t('my_bills') }}
             </h2>
         </template>
@@ -387,6 +425,29 @@ async function on_filter(e: DataTableFilterEvent) {
                     <ProgressSpinner v-if=waiting class="w-full"/>
 
                     <template v-else>
+
+
+                        <div v-if="pending_invitations.length" class="p-6 border-b border-gray-200 text-white">
+                            <p>{{$t('you_have_some_pending_invitations')}}</p>
+
+                            <p v-for="(invitation, n) in pending_invitations" :key="n" class="my-3">
+                                {{$t('from')}} {{ invitation.inviter.name }} <br/>
+                                {{ invitation.hh_names.length === 1 ? t('household') : t('households') }}:
+                                {{ invitation.hh_names.join(', ') }} <br/>
+
+                                <div class="mt-2">
+                                    <Button outlined severity="success" class="py-1 mr-2"
+                                            @click="accept_invitation(invitation.id)">
+                                        {{$t('accept')}}
+                                    </Button>
+                                    <Button outlined severity="danger" class="py-1"
+                                            @click="decline_invitation(invitation.id)">
+                                        {{$t('decline')}}
+                                    </Button>
+                                </div>
+                            </p>
+
+                        </div>
 
                         <div v-if="!!current_household" class="lg:float-right mb-3 lg:mb-0 lg:mt-2 mr-1 text-right">
                             <Button outlined :aria-label="$t('add_bill')" :label="$t('add_bill')"

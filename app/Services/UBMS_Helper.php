@@ -18,6 +18,12 @@ class UBMS_Helper
         return $res;
     }
 
+    public function intArrayToSortedStr(array $arr): string
+    {
+        $arr = collect($arr)->sort()->values()->toArray();
+        return implode(',', $arr);
+    }
+
     public function detectChanges(array $old, array $new): array
     {
 

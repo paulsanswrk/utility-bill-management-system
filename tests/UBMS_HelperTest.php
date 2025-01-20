@@ -16,6 +16,17 @@ test('str to sorted int array', function () {
     expect($ubms_helper->strToSortedIntArray('6,6,6'))->toBe([6, 6, 6]);
 });
 
+
+test('int array to sorted str', function () {
+    $ubms_helper = new UBMS_Helper();
+
+    expect($ubms_helper->intArrayToSortedStr([]))->toBe('');
+    expect($ubms_helper->intArrayToSortedStr([3, 1, 2]))->toBe('1,2,3');
+    expect($ubms_helper->intArrayToSortedStr([10, 5, 7, 5]))->toBe('5,5,7,10');
+    expect($ubms_helper->intArrayToSortedStr([3]))->toBe('3');
+    expect($ubms_helper->intArrayToSortedStr([6, 6, 6]))->toBe('6,6,6');
+});
+
 test('detect_changes', function () {
     $ubms_helper = new UBMS_Helper();
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bill;
 use App\Models\Household;
 use App\Models\UtilityCompany;
+use App\Services\UBMS_Helper;
 use App\Services\UBMS_Security_Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,10 +17,12 @@ use STS\ZipStream\Facades\Zip;
 class BillController extends Controller
 {
     private UBMS_Security_Service $ubms_security_service;
+    private UBMS_Helper $ubms_helper;
 
-    function __construct(UBMS_Security_Service $ubms_security_service)
+    function __construct(UBMS_Security_Service $ubms_security_service, UBMS_Helper $ubms_helper)
     {
         $this->ubms_security_service = $ubms_security_service;
+        $this->ubms_helper = $ubms_helper;
     }
 
     /**
@@ -58,6 +61,8 @@ FROM `bills` b
          INNER JOIN `household_user` hu ON hu.`household_id` = hh.`id`
          INNER JOIN `users` u ON u.`id` = hu.`user_id`
 WHERE u.`id` = $user_id
+  and b.company_id is not null
+  # and b.bill_pdf_path is not null
 and ($household_id = 0 or $household_id = b.household_id)
 order by b.bill_date desc");
 
@@ -66,21 +71,7 @@ order by b.bill_date desc");
         }
 
         return $bills;
-        /*->map(function ($bill) {
-            return [
-                'id' => $bill->id,
-                'household_id' => $bill->household_id,
-                'utility_company_id' => $bill->company_id,
-                'utility_company_name' => $bill->company?->name,
-                'amount' => $bill->amount,
-                'paid' => $bill->paid,
-                'bill_date' => $bill->bill_date,
-                'payment_date' => $bill->payment_date,
-                'has_bill_pdf' => !empty($bill->bill_pdf_path),
-                'has_payment_pdf' => !empty($bill->payment_confirmation_pdf_path),
-            ];
-        })
-        ->sortByDesc('bill_date')->values();*/
+
     }
 
     public static function check_access_to_bill(int $user_id, int $bill_id): bool
@@ -113,6 +104,7 @@ order by b.bill_date desc");
             'user_households' => $user_households,
             'hh_bills' => $hh_bills,
             'hh_companies' => $hh_companies,
+            'invitations' => (new HouseholdController($this->ubms_helper))->get_invitations_for_invitee(Auth::id()),
         ];
     }
 

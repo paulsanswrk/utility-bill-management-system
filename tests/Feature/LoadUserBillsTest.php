@@ -24,12 +24,12 @@ it('', function () {
 
 });
 
-it('drop table', function () {
+it('household_invitations', function () {
     config(['database.default' => 'mysql']);
 
 //    Schema::dropIfExists('household_user');
 
-//    Schema::dropIfExists('household_invitations');
+    Schema::dropIfExists('household_invitations');
 
     Schema::create('household_invitations', function (Blueprint $table) {
         $table->id();
@@ -54,5 +54,24 @@ it('drop table', function () {
             $table->timestamps();
         });*/
 
+    expect(true)->toBeTrue();
 
 });
+
+it('like', function () {
+    config(['database.default' => 'mysql']);
+
+    $data = DB::select("select * FROM household_invitations
+            WHERE invited_by = ?
+            AND invitee_email = ?
+            AND ? like CONCAT('%', household_ids, '%')", [
+        108,
+        'test@test.com',
+        '20,21'
+    ]);
+
+    expect(true)->toBeTrue();
+
+});
+
+

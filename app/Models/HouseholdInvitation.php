@@ -25,6 +25,11 @@ class HouseholdInvitation extends Model
         return $this->belongsTo(User::class, 'invitee_id');
     }
 
+    public function inviter()
+    {
+        return $this->belongsTo(User::class, 'invited_by');
+    }
+
     public function households()
     {
         $hh_ids = (new UBMS_Helper())->strToSortedIntArray($this->household_ids);
