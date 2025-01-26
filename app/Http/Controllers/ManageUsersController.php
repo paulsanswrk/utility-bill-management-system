@@ -7,7 +7,6 @@ use App\Models\EmailChangeRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRules;
@@ -241,6 +240,29 @@ class ManageUsersController extends Controller
         auth('web')->loginUsingId($impersonating_admin_id);
 
         return redirect()->route('manage_users');
+    }
+
+    public function remove(Request $request)
+    {
+        if (auth()->user()->is_admin !== 1) {
+            return [
+                'success' => false,
+                'message' => 'You have no access to this functionality',
+            ];
+        }
+
+        $user_id = $request->user_id;
+
+        if (auth()->id() === $user_id) {
+            return [
+                'success' => false,
+                'message' => 'You cannot delete your own account',
+            ];
+        }
+
+        $user = User::find($user_id);
+        $user->delete();
+        return ['success' => true,];
     }
 
 }

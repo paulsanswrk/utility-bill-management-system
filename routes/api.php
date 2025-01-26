@@ -37,6 +37,7 @@ Route::post("/change_pwd", [ManageUsersController::class, 'change_pwd'])->middle
 Route::post("/users/send_pwd_reset_link", [ManageUsersController::class, 'send_pwd_reset_link'])->middleware('auth:sanctum');
 Route::post("/users/impersonate", [ManageUsersController::class, 'impersonate'])->middleware('auth:sanctum');
 Route::post("/users/exit_impersonation", [ManageUsersController::class, 'exit_impersonation'])->middleware('auth:sanctum');
+Route::post("/users/remove", [ManageUsersController::class, 'remove'])->middleware('auth:sanctum');
 
 
 Route::post("/households/get_user_households", [HouseholdController::class, 'get_user_households'])->middleware('auth:sanctum');

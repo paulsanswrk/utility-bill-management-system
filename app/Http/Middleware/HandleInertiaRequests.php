@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
                 'is_impersonating' => session()->has('impersonating_admin_id'),
             ],
             'recaptcha_site_key' => config('services.google_recaptcha.site_key'),
+
         ];
     }
 }

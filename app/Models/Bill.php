@@ -14,7 +14,7 @@ class Bill extends Model
     const pdf_tmp_upload_path = 'uploads/temp';
 
     protected $fillable = [
-        'user_id',
+//        'user_id',
         'household_id',
         'company_id',
         'bill_date',
@@ -30,10 +30,10 @@ class Bill extends Model
 
 //    protected $with = ['company', ]; //'household'
 
-    public function user(): BelongsTo
+/*    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
+    }*/
 
     public function company(): BelongsTo
     {

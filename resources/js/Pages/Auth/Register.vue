@@ -9,15 +9,16 @@ import axios from "axios";
 import {useReCaptcha} from "vue-recaptcha-v3";
 
 const props = defineProps<{
-    email: string;
+    email: string | null;
 }>();
 
 const form = useForm({
     name: '',
-    email: props.email,
+    email: props.email || '',
     password: '',
     password_confirmation: '',
     captcha_token: '',
+    errors: Object,
 });
 
 const {executeRecaptcha, recaptchaLoaded} = useReCaptcha()!;

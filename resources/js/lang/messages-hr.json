@@ -130,7 +130,9 @@
         "edit": "Uredi",
         "change_password": "Promijeni lozinku",
         "reset_password": "Resetiraj lozinku",
-        "impersonate": "Imitiraj"
+        "impersonate": "Imitiraj",
+        "delete_confirmation": "Korisnik će biti izbrisan. Nastaviti?",
+        "delete": "Izbriši"
     },
     "exit_impersonation": "Izađi iz Imitacije",
     "an_email_with_a_password_reset_link_will_be_sent_to_user": "Email s poveznicom za resetiranje lozinke bit će poslan korisniku",

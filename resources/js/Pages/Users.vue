@@ -46,6 +46,8 @@
                                         class="p-button-outlined p-button-danger ml-2"/>
                                 <Button :label="$t('users.impersonate')" size="small" @click="impersonate(data.id)"
                                         class="p-button-outlined p-button-success ml-2"/>
+                                <Button :label="$t('users.delete')" size="small" @click="remove($event, data)"
+                                        class="p-button-outlined p-button-danger ml-2"/>
                             </template>
                         </Column>
                     </DataTable>
@@ -173,6 +175,30 @@ async function impersonate(user_id: number) {
         location.assign('/');
     else
         toast.add({severity: 'error', summary: 'An error occurred', detail: message, life: 3000});
+}
+
+async function remove(event: any, user: any) {
+    confirm.require({
+        target: event.currentTarget,
+        message: t('users.delete_confirmation'),
+        icon: 'pi pi-exclamation-triangle',
+        rejectClass: 'p-button-secondary p-button-outlined p-button-sm',
+        acceptClass: 'p-button-sm',
+        rejectLabel: t('cancel'),
+        acceptLabel: t('continue_'),
+        accept: async () => {
+            const {data: {success, message,}} = await axios.post('/api/users/remove', {user_id: user.id});
+            if (success) {
+                toast.add({severity: 'info', summary: 'Confirmed', detail: 'User removed', life: 3000});
+                await load_users();
+            }
+            else
+                toast.add({severity: 'error', summary: 'An error occurred', detail: message, life: 3000});
+        },
+        reject: () => {
+        }
+    });
+
 }
 </script>
 

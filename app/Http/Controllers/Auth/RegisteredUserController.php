@@ -7,6 +7,7 @@ use App\Models\Household;
 use App\Models\User;
 use App\Services\UBMS_Security_Service;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -59,6 +60,12 @@ class RegisteredUserController extends Controller
             'language' => $lang,
         ]);
 
+/*        if (session('no_email_verification_required')) {
+            if ($user->markEmailAsVerified()) {
+                event(new Verified($request->user()));
+            }
+        }*/
+
         $lang = $request->cookie('user_lang');
 
 
@@ -81,6 +88,11 @@ class RegisteredUserController extends Controller
                 ->where('invitee_email', $request->email)
                 ->where('invitation_status', 'accepted')
                 ->delete();
+
+            if ($user->markEmailAsVerified()) {
+                event(new Verified($request->user()));
+            }
+
         }
 
 

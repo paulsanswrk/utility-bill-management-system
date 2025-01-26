@@ -341,6 +341,8 @@ where u.id in
                 'invitation_status' => 'accepted',
             ]);
 
+//            session()->flash('no_email_verification_required', 'true');
+
             return redirect()->route('register')->with([
                 'error' => 'The invitee is not a registered user.',
                 'email' => $invitation->invitee_email,

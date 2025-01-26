@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bill;
 use App\Models\Household;
 use App\Models\UtilityCompany;
+use App\Repositories\UBMS_Repo;
 use App\Services\UBMS_Helper;
 use App\Services\UBMS_Security_Service;
 use Illuminate\Http\Request;
@@ -18,11 +19,13 @@ class BillController extends Controller
 {
     private UBMS_Security_Service $ubms_security_service;
     private UBMS_Helper $ubms_helper;
+    private UBMS_Repo $ubms_repo;
 
-    function __construct(UBMS_Security_Service $ubms_security_service, UBMS_Helper $ubms_helper)
+    function __construct(UBMS_Security_Service $ubms_security_service, UBMS_Helper $ubms_helper, UBMS_Repo $ubms_repo)
     {
         $this->ubms_security_service = $ubms_security_service;
         $this->ubms_helper = $ubms_helper;
+        $this->ubms_repo = $ubms_repo;
     }
 
     /**
@@ -276,7 +279,9 @@ order by b.bill_date desc");
     {
         $user_id = Auth::id();
 
-        $bills = Bill::all()->where('user_id', '=', $user_id)->whereNotNull('company_id')->values();
+//        $bills = Bill::all()->where('user_id', '=', $user_id)->whereNotNull('company_id')->values();
+
+        $bills = $this->ubms_repo->get_user_bills($user_id);
 
         $zip = Zip::create("package.zip");
 
@@ -285,11 +290,11 @@ order by b.bill_date desc");
         foreach ($bills as $bill) {
             foreach (['bill_pdf_path' => 'bill', 'payment_confirmation_pdf_path' => 'payment_confirmation'] as $doc_type => $fn) {
                 if ($bill->$doc_type) {
-                    $zip_path = "{$bill->household->name}/{$bill->bill_date}/{$bill->company->name}/{$fn}.pdf";
+                    $zip_path = "{$bill->household_name}/{$bill->bill_date}/{$bill->utility_company_name}/{$fn}.pdf";
 
                     $suffix = $suffix_4_dup_zip_paths[$zip_path] ?? 0;
                     if ($suffix)
-                        $zip_path = "{$bill->household->name}/{$bill->bill_date}/{$bill->company->name}/{$fn}-{$suffix}.pdf";
+                        $zip_path = "{$bill->household_name}/{$bill->bill_date}/{$bill->utility_company_name}/{$fn}-{$suffix}.pdf";
                     $suffix_4_dup_zip_paths[$zip_path] = $suffix + 1;
 
                     $full_fn = storage_path("app/{$bill->$doc_type}");
