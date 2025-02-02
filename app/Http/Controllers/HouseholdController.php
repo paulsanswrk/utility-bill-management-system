@@ -9,7 +9,9 @@ use App\Models\User;
 use App\Services\UBMS_Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
+use App\Mail\InvitationStatusNotification;
 
 class HouseholdController extends Controller
 {
@@ -196,6 +198,8 @@ where u.id in
 
 
         foreach ($new_mappings_by_email as $invitee_email => $new_mapping) {
+            if (!$new_mapping['hh_ids']) continue;
+
             $new_hh_ids = $this->ubms_helper->strToSortedIntArray($new_mapping['hh_ids']);
             $invitee = DB::table('users')->where('email', $invitee_email)->first();
 
@@ -314,6 +318,25 @@ where u.id in
 
     }
 
+    private function send_invitation_status_to_hh_owner($invitation, $status)
+    {
+        $data = DB::table('users')->where('id', $invitation->invited_by)->select('email', 'name')->first();
+        $householdOwnerEmail = $data->email;
+        $ownerName = $data->name;
+
+        $locale = DB::table('users')->where('id', $invitation->invited_by)->value('language') ?? 'hr';
+        $householdIds = explode(',', $invitation->household_ids);
+        $householdNames = DB::table('households')->whereIn('id', $householdIds)->pluck('name')->toArray() ?? 'unknown household';
+        $householdNames = implode(', ', $householdNames);
+
+        Mail::to($householdOwnerEmail)->send(new InvitationStatusNotification(
+            $locale,
+            $ownerName,
+            $householdNames,
+            $status // 'approved' or 'declined'
+        ));
+    }
+
     public function accept($uuid)
     {
         $invitation = HouseholdInvitation::where('uuid', $uuid)->with(['invitee:id,name'])->first();
@@ -340,6 +363,8 @@ where u.id in
             $invitation->update([
                 'invitation_status' => 'accepted',
             ]);
+
+            $this->send_invitation_status_to_hh_owner($invitation, 'approved');
 
 //            session()->flash('no_email_verification_required', 'true');
 
@@ -392,6 +417,8 @@ where u.id in
             ]);
         }
 
+        $this->send_invitation_status_to_hh_owner($invitation, 'declined');
+
         $invitation->delete();
 
         // Update the invitation_status to 'declined'
@@ -415,6 +442,8 @@ where u.id in
 
         Household::add_user_households(auth()->id(), $invitation->household_ids);
 
+        $this->send_invitation_status_to_hh_owner($invitation, 'approved');
+
         $invitation->delete();
 
         return ['success' => true, 'invitations' => $this->get_invitations_for_invitee(), 'user_households' => Household::get_user_households(),];
@@ -427,6 +456,8 @@ where u.id in
             return ['success' => false, 'message' => 'Invitation not found'];
         }
 
+        $this->send_invitation_status_to_hh_owner($invitation, 'declined');
+
         $invitation->delete();
 
         return ['success' => true, 'invitations' => $this->get_invitations_for_invitee(),];
@@ -437,7 +468,7 @@ where u.id in
 
         $invitation = HouseholdInvitation::find($id);
 
-        $invitation->delete();
+        $invitation?->delete();
 
         return ['success' => true,
             'mappings' => $this->get_households_mappings()['mappings'],

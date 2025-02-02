@@ -44,7 +44,8 @@
                                         class="p-button-outlined p-button-warning ml-2"/>
                                 <Button :label="$t('users.reset_password')" size="small" @click="resetPassword($event, data)"
                                         class="p-button-outlined p-button-danger ml-2"/>
-                                <Button :label="$t('users.impersonate')" size="small" @click="impersonate(data.id)"
+                                <Button v-if="!$page.props.auth.is_impersonating"
+                                    :label="$t('users.impersonate')" size="small" @click="impersonate(data.id)"
                                         class="p-button-outlined p-button-success ml-2"/>
                                 <Button :label="$t('users.delete')" size="small" @click="remove($event, data)"
                                         class="p-button-outlined p-button-danger ml-2"/>

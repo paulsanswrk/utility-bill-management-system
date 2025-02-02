@@ -192,7 +192,7 @@ function fill_form_for_matching_user(editing_user_email: string) {
     <AuthenticatedLayout>
 
         <template #header>
-            <a href="/" class="block mb-6">
+            <a :href="route('dashboard')" class="block mb-6">
                 <Button :label="$t('back_to_my_bills')" icon="pi pi-chevron-left" size="small"/>
             </a>
             <h2 class="font-semibold text-3xl text-white leading-tight">{{ $t('households_access') }}</h2>

@@ -168,6 +168,16 @@ function default_bill(): Bill {
 async function load_bills() {
     waiting.value = true;
 
+    if(!current_household.value) { //hh not selected
+        const {
+            data: {
+                user_households,
+            }
+        } = await axios.post('/api/bills', {});
+
+        current_household.value = user_households[0] ?? null;
+    }
+
     const {
         data: {
             user_households,

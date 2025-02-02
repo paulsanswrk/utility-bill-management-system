@@ -60,12 +60,6 @@ class RegisteredUserController extends Controller
             'language' => $lang,
         ]);
 
-/*        if (session('no_email_verification_required')) {
-            if ($user->markEmailAsVerified()) {
-                event(new Verified($request->user()));
-            }
-        }*/
-
         $lang = $request->cookie('user_lang');
 
 
