@@ -56,6 +56,7 @@ class BillController extends Controller
        b.paid,
        b.bill_date,
        b.payment_date,
+       b.bill_summary,
        if(b.bill_pdf_path is not null, 1, 0)                 has_bill_pdf,
        if(b.payment_confirmation_pdf_path is not null, 1, 0) has_payment_pdf
 FROM `bills` b

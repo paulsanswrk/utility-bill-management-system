@@ -21,6 +21,7 @@ class Bill extends Model
         'payment_date',
         'amount',
         'paid',
+        'bill_summary',
     ];
 
     protected $casts = [
