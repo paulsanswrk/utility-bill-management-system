@@ -11,6 +11,7 @@ export interface Bill {
     paid: boolean;
     has_bill_pdf: boolean;
     has_payment_pdf: boolean;
+    bill_summary?: string;
 }
 
 export const bills: Ref<Bill_Plain_Obj[]> = ref([]);
@@ -26,7 +27,8 @@ export type Bill_Plain_Obj = {
     utility_company_name: string;
     paid: boolean,
     has_bill_pdf: boolean,
-    has_payment_pdf: boolean
+    has_payment_pdf: boolean,
+    bill_summary?: string
 };
 
 export function plain_to_bill(o: Bill_Plain_Obj): Bill {
@@ -40,6 +42,7 @@ export function plain_to_bill(o: Bill_Plain_Obj): Bill {
         paid: o.paid,
         has_bill_pdf: o.has_bill_pdf,
         has_payment_pdf: o.has_payment_pdf,
+        bill_summary: o.bill_summary,
     }
 }
 
@@ -54,5 +57,6 @@ export function bill_to_plain(o: Bill): Bill_Plain_Obj {
         paid: o.paid,
         has_bill_pdf: o.has_bill_pdf,
         has_payment_pdf: o.has_payment_pdf,
+        bill_summary: o.bill_summary,
     }
 }

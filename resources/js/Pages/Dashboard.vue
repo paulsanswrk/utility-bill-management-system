@@ -10,7 +10,7 @@ import FloatLabel from 'primevue/floatlabel';
 
 import Toast from 'primevue/toast';
 import dayjs from "dayjs";
-import {FileUploadBeforeSendEvent} from "primevue/fileupload";
+import {FileUploadBeforeSendEvent, FileUploadUploadEvent} from "primevue/fileupload";
 import {getCookie} from "typescript-cookie";
 
 import ConfirmPopup from 'primevue/confirmpopup';
@@ -285,6 +285,18 @@ async function get_zip() {
 
 function onFileUpload(e: Event) {
     // toast.add({severity: 'info', summary: 'Success', detail: 'File Uploaded', life: 3000});
+}
+
+function onBillUploaded(e: FileUploadUploadEvent) {
+    bill.value.has_bill_pdf = true;
+    try {
+        const response = JSON.parse(e.xhr.responseText);
+        if (response.bill_summary) {
+            bill.value.bill_summary = response.bill_summary;
+        }
+    } catch (err) {
+        console.error('Failed to parse upload response', err);
+    }
 }
 
 function beforeSend(e: FileUploadBeforeSendEvent) {
@@ -771,7 +783,7 @@ async function decline_invitation(id: number) {
                                             :choose-label="$t('upload_bill')"
                                             :show-upload-button="false"
                                             @before-send="beforeSend($event)"
-                                            @upload="bill.has_bill_pdf = true"
+                                            @upload="onBillUploaded($event)"
                                             :maxFileSize="1000000" input-id="bill_pdf_path">
                                     <template #empty>
                                         <p>{{ $t('drag_and_drop_file_to_here_to_upload') }}</p>
@@ -810,6 +822,15 @@ async function decline_invitation(id: number) {
                                 <input type="hidden" class="p-filled"/>
                                 <label for="payment_confirmation_pdf_path">{{ $t('payment_confirmation') }}</label>
                             </div>
+                        </div>
+
+                        <div v-if="bill.bill_summary" class="mb-5">
+                            <label class="block text-sm font-semibold mb-2 text-gray-300">
+                                <i class="pi pi-sparkles mr-1"></i> AI Bill Summary
+                            </label>
+                            <Textarea v-model="bill.bill_summary" readonly auto-resize
+                                      class="w-full" rows="5"
+                                      style="opacity: 0.85; background: rgba(255,255,255,0.05);"/>
                         </div>
 
                         <div class="flex justify-content-end gap-2">
