@@ -33,6 +33,10 @@ Route::get('/users', function () {
     return Inertia::render('Users');
 })->middleware(['auth', 'verified'])->name('manage_users');
 
+Route::get('/ai-summaries', function () {
+    return Inertia::render('AiSummaries');
+})->middleware(['auth', 'verified'])->name('ai_summaries');
+
 Route::get('/households', function () {
     return Inertia::render('HouseholdsAccess');
 })->middleware(['auth', 'verified'])->name('households_access');

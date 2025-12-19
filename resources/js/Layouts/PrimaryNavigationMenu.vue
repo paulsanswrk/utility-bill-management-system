@@ -79,6 +79,7 @@ async function exit_impersonation() {
                             <DropdownLink :href="route('profile.edit')"> {{ $t('profile') }}</DropdownLink>
                             <DropdownLink :href="route('households_access')"> {{ $t('households_access') }}</DropdownLink>
                             <DropdownLink v-if="$page.props.auth.user.is_admin" :href="route('manage_users')"> {{ $t('users_') }}</DropdownLink>
+                            <DropdownLink v-if="$page.props.auth.user.is_admin" :href="route('ai_summaries')"> AI Summaries</DropdownLink>
                             <DropdownLink v-if="$page.props.auth.user.is_admin" :href="route('dashboard')"> {{ $t('my_bills') }}</DropdownLink>
                             <DropdownLink v-if="$page.props.auth.is_impersonating" href="javascript:;" @click.prevent="exit_impersonation()"> {{ $t('exit_impersonation') }}</DropdownLink>
                             <DropdownLink :href="route('logout')" method="post" as="button">

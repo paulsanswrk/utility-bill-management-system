@@ -7,6 +7,7 @@ use App\Http\Controllers\ManageUsersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\BillSummaryController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -47,3 +48,4 @@ Route::post('/households/accept/{id}', [HouseholdController::class, 'accept_ajax
 Route::post('/households/decline/{id}', [HouseholdController::class, 'decline_ajax']);
 Route::post('/households/delete_invitation/{id}', [HouseholdController::class, 'delete_invitation']);
 
+Route::get('/admin/bill-summaries', [BillSummaryController::class, 'index'])->middleware('auth:sanctum');
