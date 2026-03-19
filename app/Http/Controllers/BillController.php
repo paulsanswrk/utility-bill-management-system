@@ -117,6 +117,7 @@ order by b.bill_date desc");
     public function store(Request $request)
     {
         $bill = new Bill();
+        $bill->user_id = Auth::id();
         $bill->household_id = $request->household_id;
         $bill->cipher_key_encrypted = bin2hex($this->ubms_security_service->gen_key_4_bill());
 
